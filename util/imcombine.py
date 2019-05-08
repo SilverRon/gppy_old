@@ -20,11 +20,11 @@ def imcombine(imlist):
 	refim		= imlist[0]
 	starttime	= time.time()
 	print('LIST '+str(len(imlist)))
+	f	= open('imcombine.list', 'w')
 	for inim in imlist:
-		f	= open('imcombine.list', 'w')
 		print(inim)
 		f.write(inim+'\n')
-		f.close()
+	f.close()
 	try:
 		jdmean, utmean	= centertime(imlist)
 		utpart			= utmean.split('T')[1].split(':')

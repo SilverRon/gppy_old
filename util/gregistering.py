@@ -13,8 +13,9 @@ from multiprocessing import Process, Pool
 import multiprocessing as mp
 import time
 #============================================================
-def gregistering(ref_image, images_to_align):
+def gregistering(images_to_align, ref_image):
 	starttime	= time.time()
+	if ref_image == '': ref_image = images_to_align[0]
 	identifications = alipy.ident.run(ref_image, images_to_align, visu=False)
 	for id in identifications: # list of the same length as images_to_align.
 		if id.ok == True: # i.e., if it worked
@@ -56,6 +57,6 @@ for i in images_to_align : print i
 #------------------------------------------------------------
 if __name__ == '__main__':
 	jobs	= []
-	p			= mp.Process(target=gregistering, args=(ref_image, images_to_align))
+	p			= mp.Process(target=gregistering, args=(images_to_align, ref_image))
 	jobs.append(p)
 	p.start()
