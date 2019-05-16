@@ -153,7 +153,7 @@ for inim in imlist:
 		inmagkey    = maglist[i]
 		inmagerkey  = magerlist[i]
 		
-		stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=13, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
+		stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 		#stars_zp, stdnumb    = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 
 		zp, zper, intbl_alive, intbl_exile	= zpcal(stars_zp, inmagkey, inmagerkey, refmagkey, refmagerkey)

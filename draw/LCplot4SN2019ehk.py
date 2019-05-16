@@ -19,8 +19,8 @@ def LCplot(ax, t0, t, mag, magerr, offset=0, label='Somewhere', marker='o', colo
 						label=label)
 	ax.errorbar(**params_plot)
 #------------------------------------------------------------
-#phot0	= ascii.read('/mnt/window/Users/User/Downloads/data/Project/SN2019ehk/result4com.dat')
-phot0	= ascii.read('/mnt/window/Users/User/Downloads/data/Project/SN2019ehk/result.dat')
+phot0	= ascii.read('/mnt/window/Users/User/Downloads/data/Project/SN2019ehk/result4com.dat')
+#phot0	= ascii.read('/mnt/window/Users/User/Downloads/data/Project/SN2019ehk/result.dat')
 phot	= phot0[phot0['magerr']!=-99]
 nd		= phot0[phot0['magerr']==-99]
 target	= 'SN2019ehk'
