@@ -47,7 +47,8 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 #ra1, de1	= 94.09275, -21.35991111
 #ra1, de1	= 248.5427121, 19.634815
 #ra1, de1	= 208.3721617, 40.27532028		#	AT 2019ein
-ra1, de1	= 185.733875, 15.826			#	SN2019ehk
+#ra1, de1	= 185.733875, 15.826			#	SN2019ehk
+ra1, de1	= 161.63775, 13.74194444		#	SN2018ek
 
 #	IMAGES TO CALC.
 #imlist		= glob.glob('Calib-*com.fits')
@@ -153,7 +154,7 @@ for inim in imlist:
 		inmagkey    = maglist[i]
 		inmagerkey  = magerlist[i]
 		
-		stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
+		stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=17, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 		#stars_zp, stdnumb    = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 
 		zp, zper, intbl_alive, intbl_exile	= zpcal(stars_zp, inmagkey, inmagerkey, refmagkey, refmagerkey)
