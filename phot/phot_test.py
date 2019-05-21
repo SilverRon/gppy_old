@@ -644,6 +644,13 @@ def ps1_Tonry(intbl, name):
 	from astropy.table import Table
 	from astropy.io import ascii
 	#	REJECT BAD QUALITY
+	intbl	= intbl[	(intbl['gmag']>12)	&
+						(intbl['rmag']>12)	&
+						(intbl['imag']>12)	&
+						(intbl['zmag']>12)	&
+						(intbl['ymag']>12)]
+
+
 	outfile	= 'ps1-Tonry-'+name+'.cat'
 	Q		= intbl['Q']
 	indx    = np.where(Q < 128)
@@ -654,11 +661,11 @@ def ps1_Tonry(intbl, name):
 	name    = intbl['NUMBER']
 	ra, de  = intbl['RA_ICRS'],    intbl['DE_ICRS']
 
-	g, ger  = intbl['gmag'],       intbl['e_gmag']
-	r, rer  = intbl['rmag'],       intbl['e_rmag']
-	i, ier  = intbl['imag'],       intbl['e_imag']
-	z, zer  = intbl['zmag'],       intbl['e_zmag']
-	y, yer  = intbl['ymag'],       intbl['e_ymag']
+	g, ger  = intbl['gmag'],	intbl['e_gmag']
+	r, rer  = intbl['rmag'],	intbl['e_rmag']
+	i, ier  = intbl['imag'],	intbl['e_imag']
+	z, zer  = intbl['zmag'],	intbl['e_zmag']
+	y, yer  = intbl['ymag'],	intbl['e_ymag']
 	#	TRANSF. ERROR FOR B CONST. TERMS
 	Bsig, Vsig, Rsig, Isig	= 0.034, 0.012, 0.01, 0.016
 	#	COLOR TERM

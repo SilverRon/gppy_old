@@ -6,6 +6,7 @@ import os, glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
+from astropy.io import fits
 #from imsng import zpcal
 #============================================================
 #	USER SETTING
@@ -49,16 +50,17 @@ imlist.sort()
 for img in imlist: print(img)
 #	REF. CATALOG
 refcatname	= 'PS1'					#PS1/SDSS/APASS/2MASS
-query_checklist = glob.glob('*.cat')
 #	RESULT FILE
 f		= open('phot.dat', 'w')
-colline	= '#obs\taperture\tseeing\tzp\tzperr\tinstmag\tinstmagerr\tmag\tmagerr\n'
+colline	= '#obs\tdate-obs\taperture\tseeing\tzp\tzperr\tinstmag\tinstmagerr\tmag\tmagerr\n'
 f.write(colline)
 #============================================================
 #	MAIN COMMAND
 #============================================================
 for inim in imlist:
+	query_checklist = glob.glob('*.cat')
 	try:
+		hdr			= fits.getheader(inim)
 		part        = inim.split('-')
 		obs         = part[1]
 		name        = part[2]
@@ -111,7 +113,7 @@ for inim in imlist:
 	#------------------------------------------------------------
 	#	MATCHING
 	#------------------------------------------------------------
-		merge_raw       = matching(incat, refcat)
+		merge_raw	= matching(incat, refcat)
 		colnames    = merge_raw.colnames
 		maglist     = []
 		magerlist   = []
@@ -127,8 +129,19 @@ for inim in imlist:
 			mtbl       = merge_raw
 			inmagkey    = maglist[i]
 			inmagerkey  = magerlist[i]
-			
-			stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=16.5, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.001)
+
+			param_st4zp	= dict(	intbl=mtbl,
+								inmagerkey=inmagerkey,
+								refmagkey=refmagkey,
+								refmagerkey=refmagerkey,
+								refmaglower=14,
+								refmagupper=16.5,
+								refmagerupper=0.05,
+								inmagerupper=0.05,
+								class_star_cut=0.001)
+
+			stars_zp	= star4zp(**param_st4zp)
+			#stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=16.5, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.001)
 			#stars_zp, stdnumb    = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 
 			zp, zper, intbl_alive, intbl_exile	= zpcal(stars_zp, inmagkey, inmagerkey, refmagkey, refmagerkey)
@@ -146,7 +159,7 @@ for inim in imlist:
 		if len(indx_target[0]) == 0:
 			aper	= 2*fwhm_pix
 			ul		= limitmag(3, zp, aper, skysig)
-			comment		= inim+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+			comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
 						+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
 						+'\t--\t\t\t'+'--\t' \
 						+'\t'+str(round(ul, 3))+'\t'+'0'+'\n'
@@ -154,7 +167,7 @@ for inim in imlist:
 			f.write(comment)
 
 		else:
-			comment		= inim+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+			comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
 						+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
 						+'\t'+str(round(intbl[indx_target]['MAG_APER_7'][0], 3))+'\t\t'+str(round(intbl[indx_target]['MAGERR_APER_7'][0], 3)) \
 						+'\t'+str(round(intbl[indx_target]['REAL_MAG_APER_7'][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_MAGERR_APER_7'][0], 3))+'\n'
@@ -180,6 +193,9 @@ for inim in imlist:
 		pass
 #-------------------------------------------------------------------------#
 f.close()
+
+photbl	= ascii.read('phot.dat')
+#photbl[photbl['mag']>20]
 
 comment		= '='*60;print(comment)
 os.system('mkdir zpcal/;mv ./*zpcal.png ./zpcal/')
