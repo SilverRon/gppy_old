@@ -47,8 +47,10 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 #ra1, de1	= 94.09275, -21.35991111
 #ra1, de1	= 248.5427121, 19.634815
 #ra1, de1	= 208.3721617, 40.27532028		#	AT 2019ein
-#ra1, de1	= 185.733875, 15.826			#	SN2019ehk
-ra1, de1	= 161.63775, 13.74194444		#	SN2018ek
+ra1, de1	= 185.733875, 15.826			#	SN2019ehk
+#ra1, de1	= 161.63775, 13.74194444		#	SN2018ek
+#ra1, de1	= 262.7914871, -8.450721945		#	ZTF19aarzaod
+#ra1, de1	= 258.341454, -9.964466			#	ZTF19aary
 
 #	IMAGES TO CALC.
 #imlist		= glob.glob('Calib-*com.fits')
@@ -88,7 +90,7 @@ for inim in imlist:
 	#	APPROXIMATE CENTER POS. & DIST CUT
 	xim_cent, yim_cent	= np.max(intbl0['X_IMAGE'])/2, np.max(intbl0['Y_IMAGE'])/2
 	im_dist		= sqsum((xim_cent-intbl0['X_IMAGE']), (yim_cent-intbl0['Y_IMAGE']))
-	indx_dist	= np.where( im_dist < 0.95*(xim_cent+yim_cent)/2. )	# 90% area
+	indx_dist	= np.where( im_dist < 0.99*(xim_cent+yim_cent)/2. )	# 90% area
 	intbl		= intbl0[indx_dist]
 	intbl.write(incat, format='ascii', overwrite=True)
 	#	NEAR CENTER RA DEC
@@ -153,8 +155,18 @@ for inim in imlist:
 		mtbl       = merge_raw
 		inmagkey    = maglist[i]
 		inmagerkey  = magerlist[i]
-		
-		stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=17, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
+		param_st4zp	= dict(	intbl=mtbl,
+							inmagerkey=inmagerkey,
+							refmagkey=refmagkey,
+							refmagerkey=refmagerkey,
+							refmaglower=12,
+							refmagupper=18,
+							refmagerupper=0.05,
+							inmagerupper=0.1,
+							class_star_cut=0.001)
+		stars_zp	= star4zp(**param_st4zp)
+
+		#stars_zp = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=17, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 		#stars_zp, stdnumb    = star4zp(mtbl, inmagerkey, refmagkey, refmagerkey, refmaglower=14, refmagupper=18, refmagerupper=0.05, inmagerupper=0.1, class_star_cut=0.01)
 
 		zp, zper, intbl_alive, intbl_exile	= zpcal(stars_zp, inmagkey, inmagerkey, refmagkey, refmagerkey)

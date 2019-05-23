@@ -187,8 +187,11 @@ def ps1_query(name, radeg, dedeg, radius=1.0):
 		#	REJECT EXTENDED SOURCES THAT CONFIMED BY PS1 & 2MASS (23, 24)
 		#	REJECT QSO, RR Lyra, VARIABLE, TRANSIENT (2, 3, 4, 5, 6, 7, 8)
 		#	REJECT POOR-QUALITY STACK OBJECT (30 = 0) -> not applied yet
-		if (i[-23] != '1') and (i[-24] != '1') and (i[-2] != '1') and (i[-3] != '1') and (i[-4] != '1') and (i[-5] != '1') and (i[-6] != '1') and (i[-7] != '1') and (i[-8] != '1'):# and (i[0] != '1'):
-			indx_sel.append(j)
+		try:
+			if (i[-23] != '1') and (i[-24] != '1') and (i[-2] != '1') and (i[-3] != '1') and (i[-4] != '1') and (i[-5] != '1') and (i[-6] != '1') and (i[-7] != '1') and (i[-8] != '1'):# and (i[0] != '1'):
+				indx_sel.append(j)
+		except:
+			pass
 	dum2	= dum1[indx_sel]
 	#	SELECT STARS FROM STARS & GALAXIES (iPSF - iKron <= 0.05)
 	indx_stars		= np.where( (dum2['imag'] - dum2['iKmag']) <= 0.05 )
@@ -775,6 +778,8 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 	indx3   = np.where( (intbl[inmagerkey] < inmagerupper) )
 	newtbl  = intbl[indx]
 	comment = '='*60+'\n' \
+			+ 'ALL\t\t\t\t: '+str(len(intbl))+'\n' \
+			+ '-'*60+'\n' \
 			+ 'FLAG(=0)\t\t\t: '+str(len(indx0[0]))+'\n' \
 			+ 'CLASS_STAR > '+str(class_star_cut)+'\t\t: '+str(len(indx1[0]))+'\n' \
 			+ refmagkey+' REF. MAGCUT ('+str(refmaglower)+'-'+str(refmagupper)+')'+'\t: '+str(len(indx2[0]))+'\n' \

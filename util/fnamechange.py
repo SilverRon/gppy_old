@@ -71,6 +71,7 @@ def fnamechange_kmtnet(inim):
 
 	filte	= hdr['FILTER']
 	exptime	= str(int(hdr['EXPTIME']))
+	obj		= hdr['OBJECT']
 	parts	= ['Calib', obs, obj, date, ut, filte, exptime+'.fits']
 	newname	= '-'.join(parts)
 	#	COPY RAW -> NEW NAME

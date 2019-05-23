@@ -1,21 +1,44 @@
 #============================================================
-#	PYTHON SCRIPT FOR MEDIAN COMBINE WITH IRAF
-#	Usage : 
-#	python imcombine.py
-#	OR JUST RUN AND WRITE INPUT & REF IMAGE
+#	Python CODE FOR GREGISTERING + IMCOMBINE
+#	JUST RUN AND WRITE INPUT & REF IMAGE
+#	2017.12.22	Changsu Choi
 #	2019.05.08	GREGORY S.H. PAEK
+#	2019.05.21	GREGORY S.H. PAEK
 #============================================================
+import os, sys, glob
+import alipy
+from multiprocessing import Process, Pool
+import multiprocessing as mp
+import time
 from astropy.io import fits
 import astropy.units as u
 from astropy.time import Time
 from pyraf import iraf
-import os, sys, glob
 import numpy as np
-import matplotlib.pyplot as plt
-from multiprocessing import Process, Pool
-import multiprocessing as mp
 import time
 #============================================================
+def gregistering(images_to_align, ref_image):
+	starttime	= time.time()
+	if ref_image == '': ref_image = images_to_align[0]
+	identifications = alipy.ident.run(ref_image, images_to_align, visu=False)
+	for id in identifications: # list of the same length as images_to_align.
+		if id.ok == True: # i.e., if it worked
+			print "%20s : %20s, flux ratio %.2f" % (id.ukn.name, id.trans, id.medfluxratio)
+		else:
+			print "%20s : no transformation found !" % (id.ukn.name)
+	outputshape = alipy.align.shape(ref_image)
+	for id in identifications:
+		if id.ok == True:
+			params_align	= dict(	filepath	= id.ukn.filepath,
+									uknstarlist	= id.uknmatchstars,
+									refstarlist	= id.refmatchstars,
+									shape		= alipy.align.shape(ref_image),
+									outdir		= './',
+									makepng		= False)
+			alipy.align.irafalign(**params_align)
+	deltime		= time.time() - starttime
+	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
+#-------------------------------------------------------------
 def imcombine(imlist):
 	refim		= imlist[0]
 	starttime	= time.time()
@@ -81,25 +104,50 @@ def centertime2(imlist) :
 	ttjdmeanutc	= Time(ttjdmean,format='jd',scale='utc')
 	return ttjdmean, ttjdmeanutc.isot
 #-------------------------------------------------------------
+def align_imcomb_seq(imlist, refim):
+	gregistering(imlist, refim)
+	alignlist	= []
+	for inim in imlist:
+		alignlist.append(inim[:-5]+'_gregister.fits')
+	imcombine(alignlist)
+#------------------------------------------------------------
 #	INPUT
 #------------------------------------------------------------
-os.system('ls *.fits')
-str1	= raw_input('IMAGES TO COMBINE (Calib-*ter.fits)\t: ')
+os.system('ls -C *.fits')
+str1	= raw_input('IMAGES TO PROCESS (Cal*.fits)\t: ')
 if str1 == '':
-	imlist = glob.glob('Calib-*ter.fits')
+	imlist	= glob.glob('Cal*.fits')
 else:
 	imlist	= glob.glob(str1)
-imlist.sort()
-
-imcombine(imlist)
-
-'''
+#------------------------------------------------------------
+#	ORGANIZE
+#------------------------------------------------------------
+objlist	= []
+for inim in imlist:
+	objlist.append(inim.split('-')[2])
+objlist	= list(set(objlist)); objlist.sort()
 #------------------------------------------------------------
 #	MULTI PROCESSING
 #------------------------------------------------------------
-if __name__ == '__main__':
-	jobs	= []
-	p			= mp.Process(target=imcombine, args=imlist)
-	jobs.append(p)
-	p.start()
-'''
+singlelist	= []
+imfail		= []
+for obj in objlist:
+	prolist	= glob.glob('*'+obj+'*.fits')
+	if len(prolist) > 1:
+		try:
+			align_imcomb_seq(prolist, prolist[0])
+		except:
+			imfail.append(prolist)
+	else:
+		singlelist.append(obj)
+print('SINGLE IMAGE LIST')
+for single in singlelist:
+	print(single)
+	'''
+	if len(prolist) > 1:
+		if __name__ == '__main__':
+			jobs	= []
+			p			= mp.Process(target=align_imcomb_seq, args=(prolist, prolist[0]))
+			jobs.append(p)
+			p.start()
+	'''

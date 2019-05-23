@@ -49,7 +49,7 @@ imlist		= glob.glob(input('image to process\t: '))
 imlist.sort()
 for img in imlist: print(img)
 #	REF. CATALOG
-refcatname	= 'PS1'					#PS1/SDSS/APASS/2MASS
+refcatname	= 'APASS'					#PS1/SDSS/APASS/2MASS
 #	RESULT FILE
 f		= open('phot.dat', 'w')
 colline	= '#obs\tdate-obs\taperture\tseeing\tzp\tzperr\tinstmag\tinstmagerr\tmag\tmagerr\n'
@@ -57,6 +57,7 @@ f.write(colline)
 #============================================================
 #	MAIN COMMAND
 #============================================================
+imfail	= []
 for inim in imlist:
 	query_checklist = glob.glob('*.cat')
 	try:
@@ -75,7 +76,7 @@ for inim in imlist:
 		#	APPROXIMATE CENTER POS. & DIST CUT
 		xim_cent, yim_cent	= np.max(intbl0['X_IMAGE'])/2, np.max(intbl0['Y_IMAGE'])/2
 		im_dist		= sqsum((xim_cent-intbl0['X_IMAGE']), (yim_cent-intbl0['Y_IMAGE']))
-		indx_dist	= np.where( im_dist < 0.95*(xim_cent+yim_cent)/2. )	# 90% area
+		indx_dist	= np.where( im_dist < 0.99*(xim_cent+yim_cent)/2. )	# 90% area
 		intbl		= intbl0[indx_dist]
 		intbl.write(incat, format='ascii', overwrite=True)
 		#	NEAR CENTER RA DEC
@@ -86,7 +87,7 @@ for inim in imlist:
 	#------------------------------------------------------------
 		if		refcatname	== 'PS1':
 			if 'ps1-'+name+'.cat' not in query_checklist:
-				querytbl        = ps1_query(name, radeg, dedeg)
+				querytbl        = ps1_query(name, radeg, dedeg, radius=0.65)
 			else:
 				querytbl        = ascii.read('ps1-'+name+'.cat')
 			reftbl, refcat  = ps1_Tonry(querytbl, name)
@@ -103,7 +104,7 @@ for inim in imlist:
 				querytbl        = apass_query(name, radeg, dedeg)
 			else:
 				querytbl        = ascii.read('apass-'+name+'.cat')
-			#reftbl, refcat  = apass_Blaton(querytbl, name)
+			reftbl, refcat  = apass_Blaton(querytbl, name)
 		elif	refcatname	== '2MASS':
 			if '2mass-'+name+'.cat' not in query_checklist:
 				querytbl        = twomass_query(name, radeg, dedeg, band=refmagkey, radius=1.0)
@@ -134,10 +135,10 @@ for inim in imlist:
 								inmagerkey=inmagerkey,
 								refmagkey=refmagkey,
 								refmagerkey=refmagerkey,
-								refmaglower=14,
-								refmagupper=16.5,
+								refmaglower=10,
+								refmagupper=20,
 								refmagerupper=0.05,
-								inmagerupper=0.05,
+								inmagerupper=0.1,
 								class_star_cut=0.001)
 
 			stars_zp	= star4zp(**param_st4zp)
@@ -190,6 +191,7 @@ for inim in imlist:
 		puthdr(inim, 'SKYSIG',		round(skysig, 3),		hdrcomment='SKY SIGMA VALUE')
 		puthdr(inim, 'SKYVAL',		round(skymed, 3),		hdrcomment='SKY MEDIAN VALUE')
 	except:
+		imfail.append(inim)
 		pass
 #-------------------------------------------------------------------------#
 f.close()

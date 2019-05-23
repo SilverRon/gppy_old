@@ -39,17 +39,18 @@ def gregistering(images_to_align, ref_image):
 #------------------------------------------------------------
 os.system('ls -C *.fits')
 try     :
-    if sys.argv[1] == 'on'  : str1 = 'Cal*com.fits'
+	str1 = sys.argv[1]
 except  : str1        = raw_input('Registering Target (i.e. Cal*com.fits) : ')
 if str1     == '' : str1 = 'Cal*com.fits'
+images_to_align = sorted(glob.glob(str1))
+n=len(images_to_align)
 
 try     :
-    if sys.argv[1] == 'on'  : ref_image = 'ref.fits'
+	print(sys.argv[1])
+	ref_image	= images_to_align[0]
 except  : ref_image        = raw_input('Reference Image (ref.fits)             : ')
 if ref_image    == '' : ref_image = 'ref.fits'
 
-images_to_align = sorted(glob.glob(str1))
-n=len(images_to_align)
 print str(n),'images will be aligned'
 for i in images_to_align : print i
 #------------------------------------------------------------
