@@ -49,7 +49,7 @@ imlist		= glob.glob(input('image to process\t: '))
 imlist.sort()
 for img in imlist: print(img)
 #	REF. CATALOG
-refcatname	= 'APASS'					#PS1/SDSS/APASS/2MASS
+refcatname	= 'PS1'					#PS1/SDSS/APASS/2MASS
 #	RESULT FILE
 f		= open('phot.dat', 'w')
 colline	= '#obs\tdate-obs\taperture\tseeing\tzp\tzperr\tinstmag\tinstmagerr\tmag\tmagerr\n'
@@ -135,8 +135,8 @@ for inim in imlist:
 								inmagerkey=inmagerkey,
 								refmagkey=refmagkey,
 								refmagerkey=refmagerkey,
-								refmaglower=10,
-								refmagupper=20,
+								refmaglower=12,
+								refmagupper=16,
 								refmagerupper=0.05,
 								inmagerupper=0.1,
 								class_star_cut=0.001)

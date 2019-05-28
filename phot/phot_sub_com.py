@@ -160,7 +160,7 @@ for inim in imlist:
 							refmagkey=refmagkey,
 							refmagerkey=refmagerkey,
 							refmaglower=12,
-							refmagupper=18,
+							refmagupper=16.5,
 							refmagerupper=0.05,
 							inmagerupper=0.1,
 							class_star_cut=0.001)
