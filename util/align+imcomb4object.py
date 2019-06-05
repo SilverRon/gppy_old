@@ -136,6 +136,7 @@ for obj in objlist:
 	if len(prolist) > 1:
 		try:
 			align_imcomb_seq(prolist, prolist[0])
+			#os.system('mv *'+obj+'*.fits multi_images')
 		except:
 			imfail.append(prolist)
 	else:

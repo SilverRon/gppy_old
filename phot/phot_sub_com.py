@@ -24,6 +24,7 @@ psfexconf_prese_param   = sharepath+'prepsfex.param'
 psfexconf_psfex_conf    = sharepath+'default.psfex'
 psfexconf_psfex_conv    = sharepath+'default.conv'
 
+path_catalog	= '/mnt/window/Users/User/Downloads/data/catalog'
 obsinfo			= ascii.read('/home/sonic/Research/table/obs.txt')
 photbl			= Table()
 obslist			= []
@@ -47,10 +48,11 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 #ra1, de1	= 94.09275, -21.35991111
 #ra1, de1	= 248.5427121, 19.634815
 #ra1, de1	= 208.3721617, 40.27532028		#	AT 2019ein
-ra1, de1	= 185.733875, 15.826			#	SN2019ehk
+#ra1, de1	= 185.733875, 15.826			#	SN2019ehk
 #ra1, de1	= 161.63775, 13.74194444		#	SN2018ek
 #ra1, de1	= 262.7914871, -8.450721945		#	ZTF19aarzaod
 #ra1, de1	= 258.341454, -9.964466			#	ZTF19aary
+ra1, de1	= 161.63775, +13.741944			#	SN2018kp
 
 #	IMAGES TO CALC.
 #imlist		= glob.glob('Calib-*com.fits')
@@ -78,7 +80,7 @@ for inim in imlist:
 	query_checklist = glob.glob('*.cat')
 	part        = inim.split('-')
 	obs         = part[1]
-	name        = part[2]
+	obj    	    = part[2]
 	exptime		= part[6]
 	refmagkey   = part[5]
 	refmagerkey = refmagkey+'err'
@@ -86,7 +88,7 @@ for inim in imlist:
 	gain		= obsinfo[obsinfo['obs']==obs]['gain'][0]
 	pixscale	= obsinfo[obsinfo['obs']==obs]['pixelscale'][0]
 	#	SourceEXtractor
-	intbl0, incat, fwhm_pix, fwhm_arcsec		= secom(inim, gain=gain, pixscale=pixscale, det_sigma=3, backsize=str(64))
+	intbl0, incat, fwhm_pix, fwhm_arcsec		= secom(inim, gain=gain, pixscale=pixscale, det_sigma=3, backsize=str(64))#, check=True)
 	#	APPROXIMATE CENTER POS. & DIST CUT
 	xim_cent, yim_cent	= np.max(intbl0['X_IMAGE'])/2, np.max(intbl0['Y_IMAGE'])/2
 	im_dist		= sqsum((xim_cent-intbl0['X_IMAGE']), (yim_cent-intbl0['Y_IMAGE']))
@@ -100,26 +102,30 @@ for inim in imlist:
 #	REF. CATALOG QUERY
 #------------------------------------------------------------
 	if		refcatname	== 'PS1':
-		if 'ps1-'+name+'.cat' not in query_checklist:
-			querytbl        = ps1_query(name, radeg, dedeg)
+		if path_catalog+'ps1-'+obj+'.cat' not in query_checklist:
+			querytbl        = ps1_query(obj, radeg, dedeg, path_catalog, radius=0.65)
 		else:
-			querytbl        = ascii.read('ps1-'+name+'.cat')
-		reftbl, refcat  = ps1_Tonry(querytbl, name)
-
+			querytbl        = ascii.read(path_catalog+'ps1-'+obj+'.cat')
+		reftbl, refcat  = ps1_Tonry(querytbl, obj)
 	elif 	refcatname	== 'SDSS':
-		if 'sdss-'+name+'.cat' not in query_checklist:
-			querytbl        = sdss_query(name, radeg, dedeg)
+		if path_catalog+'sdss-'+obj+'.cat' not in query_checklist:
+			querytbl        = sdss_query(obj, radeg, dedeg, path_catalog)
 		else:
-			querytbl        = ascii.read('sdss-'+name+'.cat')
-		reftbl, refcat  = sdss_Blaton(querytbl, name)
+			querytbl        = ascii.read(path_catalog+'sdss-'+obj+'.cat')
+		reftbl, refcat  = sdss_Blaton(querytbl, obj)
 
 	elif	refcatname	== 'APASS':
-		if 'apass-'+name+'.cat' not in query_checklist:
-			querytbl        = apass_query(name, radeg, dedeg)
+		if path_catalog+'apass-'+obj+'.cat' not in query_checklist:
+			querytbl        = apass_query(obj, radeg, dedeg, path_catalog)
 		else:
-			querytbl        = ascii.read('apass-'+name+'.cat')
-		#reftbl, refcat  = apass_Blaton(querytbl, name)
-		reftbl, refcat	= apass_Lupton(querytbl, name)
+			querytbl        = ascii.read(path_catalog+'apass-'+obj+'.cat')
+		reftbl, refcat  = apass_Blaton(querytbl, obj)
+	elif	refcatname	== '2MASS':
+		if path_catalog+'2mass-'+obj+'.cat' not in query_checklist:
+			querytbl        = twomass_query(obj, radeg, dedeg, path_catalog, band=refmagkey, radius=1.0)
+		else:
+			querytbl        = ascii.read(path_catalog+'2mass-'+obj+'.cat')
+		reftbl, refcat  = querytbl, '2mass-'+obj+'.cat'
 #------------------------------------------------------------
 #	MATCHING
 #------------------------------------------------------------
@@ -160,7 +166,7 @@ for inim in imlist:
 							refmagkey=refmagkey,
 							refmagerkey=refmagerkey,
 							refmaglower=12,
-							refmagupper=16.5,
+							refmagupper=17.5,
 							refmagerupper=0.05,
 							inmagerupper=0.1,
 							class_star_cut=0.001)
@@ -222,10 +228,7 @@ for inim in imlist:
 					+'\t'+str(round(intbl[indx_target]['MAG_APER_7'][0], 3))+'\t\t'+str(round(intbl[indx_target]['MAGERR_APER_7'][0], 3)) \
 					+'\t'+str(round(intbl[indx_target]['REAL_MAG_APER_7'][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_MAGERR_APER_7'][0], 3))+'\n'
 		'''
-		comment		=  inim+'\t\t'+ str(fits.getheader(inim)['DATE-OBS'])+'\t\t'+ inmagkey+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
-					+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
-					+'\t'+str(round(intbl[indx_target][inmagkey][0], 3))+'\t\t'+str(round(intbl[indx_target][inmagerkey][0], 3)) \
-					+'\t'+str(round(intbl[indx_target]['REAL_'+inmagkey][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_'+inmagerkey][0], 3))+'\n'
+		comment		= inim+'\t\t'+ str(fits.getheader(inim)['DATE-OBS'])+'\t\t'+ inmagkey+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t'+str(round(zp, 3))+'\t'+str(round(zper, 3))+'\t'+str(round(intbl[indx_target][inmagkey][0], 3))+'\t\t'+str(round(intbl[indx_target][inmagerkey][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_'+inmagkey][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_'+inmagerkey][0], 3))+'\n'
 		print(comment)
 		f.write(comment)
 	#-------------------------------------------------------------------------#

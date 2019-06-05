@@ -48,7 +48,6 @@ santos17['deljd'] = santos17['jd']-jd0_170817
 santos_r	= santos17[santos17['band']=='r'] 
 santos_i	= santos17[santos17['band']=='i']
 #------------------------------------------------------------
-'''
 obsul_tbl	= ascii.read(path_base+'/obs_ul.dat')
 kmtnet_tbl	= ascii.read(path_base+'/phot_kmtnet.dat')
 loao_tbl	= ascii.read(path_base+'/phot_loao.dat')
@@ -78,30 +77,29 @@ t = Time(comtbl['date-obs'], format='isot', scale='utc')
 comtbl['jd']				= t.jd
 comtbl['seeing'], comtbl['mag']					= tmptbl['seeing'], tmptbl['mag']
 comtbl.write(path_base+'phot_complete.dat', format='ascii', overwrite=True)
-'''
-obstbl		= ascii.read('/mnt/window/Users/User/Downloads/data/Project/gw/S190425z/result/retry/phot_all.dat')
 #------------------------------------------------------------
 #	PLOT 1	: TIME - MAG.
 #------------------------------------------------------------
 #	https://partrita.github.io/posts/matplotlib-examples/
 #	Get the figure and the axes
 fig, ax0	= plt.subplots(nrows=1, ncols=1, sharey=False, figsize=(8, 6))
-jdrange		= np.arange(0, 10, 0.01)
 
+jdrange		= np.arange(0, 10, 0.01)
+'''
 nsantos_r= func_linear(-0.7, jdrange, scaling=[santos_r['deljd'][0], santos_r['mag'][0]])
 #func_santos_r	= interp1d(santos_r['deljd'][santos_r['deljd']<4], santos_r['mag'][santos_r['deljd']<4])
 rmag, rmagerr = calc_app(nsantos_r, np.zeros(len(nsantos_r)), 38.4, 8.9, gwdist, gwdiststd)
-ax0.plot(jdrange, rmag, color='red', alpha=0.5)
-ax0.fill_between(jdrange, rmag-rmagerr, rmag+rmagerr, color='tomato', alpha=0.25)
-
-#------------------------------------------------------------
+ax0.plot(jdrange, rmag, color='blue', alpha=0.5)
+ax0.fill_between(jdrange, rmag-rmagerr, rmag+rmagerr, color='dodgerblue', alpha=0.5)
 '''
+#------------------------------------------------------------
+
 nsantos_i= func_linear(-0.5, jdrange, scaling=[santos_i['deljd'][0], santos_i['mag'][0]])
 #func_santos_r	= interp1d(santos_r['deljd'][santos_r['deljd']<4], santos_r['mag'][santos_r['deljd']<4])
 imag, imagerr = calc_app(nsantos_i, np.zeros(len(nsantos_i)), 38.4, 8.9, gwdist, gwdiststd)
 ax0.plot(jdrange, imag, color='blue', alpha=0.5)
 ax0.fill_between(jdrange, imag-imagerr, imag+imagerr, color='dodgerblue', alpha=0.5, label='i-band')
-'''
+
 
 
 '''
@@ -111,11 +109,9 @@ ax0.plot(comtbl['jd']-t0.jd, comtbl['mag'], marker='o')
 ax0.set(title='S190425z', xlabel='Time (Days from merger)', ylabel='Apparent Magnitude')
 ax0.set_ylim([24, 17])
 '''
-
-'''
 #	KMTNet, LOAO, LSGT, SAO, SQUEAN(, UKIRT)
-#colorlist	= ['tomato', 'tomato', 'tomato', 'tomato', 'violet']
-#markerlist	= ['D', 'o', 's', '*', 'v']
+colorlist	= ['tomato', 'tomato', 'tomato', 'tomato', 'violet']
+markerlist	= ['D', 'o', 's', '*', 'v']
 size		= [10, 10, 10, 100, 10]
 params_obs	= {		'KMTNET':'tomato-D-50',
 					'LOAO'	:'tomato-o-50',
@@ -131,36 +127,7 @@ for obs in ['KMTNET', 'LOAO', 'LSGT', 'SAO', 'SQUEAN']:
 						label=obs)#,
 						#alpha=0.5)
 	ax0.scatter(**params_plot)
-'''
 #------------------------------------------------------------
-params_obs	= {		'KMTNET':'tomato-D-50',
-					'LOAO'	:'tomato-o-50',
-					'LSGT'	:'tomato-s-50',
-					'SAO'	:'tomato-*-50',
-					'SQUEAN':'violet-v-50'}
-for obs in ['LOAO', 'LSGT', 'SAO', 'KMTNET']:
-	subtbl	= obstbl[obstbl['obs']==obs]
-	sel	= params_obs[obs].split('-')
-	color, marker, size	= sel[0], sel[1], int(sel[2])
-	
-	params_plot	= dict(	x=subtbl['jd']-t0.jd, y=subtbl['mag'],
-						c=color, s=size, marker=marker,
-						label=obs)#,
-						#alpha=0.5)
-	ax0.scatter(**params_plot)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #------------------------------------------------------------
 #	SETTING

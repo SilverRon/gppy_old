@@ -58,7 +58,7 @@ def image_list(imlist):
 	fillist = list(set(fillist))
 	return obslist, objlist, fillist
 #-------------------------------------------------------------------------#
-def sdss_query(name, radeg, dedeg, radius=1.0):
+def sdss_query(name, radeg, dedeg, path, radius=1.0):
 	"""
 	SDSS QUERY
 	INPUT   :   NAME, RA [deg], Dec [deg], radius
@@ -82,10 +82,10 @@ def sdss_query(name, radeg, dedeg, radius=1.0):
 								unit=(u.deg, u.deg), frame='icrs'), \
 								width=str(radius*60)+'m', catalog=["SDSS12"])
 	querycat= query[query.keys()[0]]
-	querycat.write(outname, format='ascii', overwrite=True)
+	querycat.write(path+'/'+outname, format='ascii', overwrite=True)
 	return querycat
 #-------------------------------------------------------------------------#
-def apass_query(name, radeg, dedeg, radius=1.0):
+def apass_query(name, radeg, dedeg, path, radius=1.0):
 	"""
 	APASS QUERY
 	INPUT   :   NAME, RA [deg], Dec [deg], radius
@@ -143,10 +143,10 @@ def apass_query(name, radeg, dedeg, radius=1.0):
 	querycat['imag']    = dum['i_mag']
 	querycat['e_imag']  = dum['e_i_mag']
 	
-	querycat.write(outname, format='ascii', overwrite=True)
+	querycat.write(path+'/'+outname, format='ascii', overwrite=True)
 	return querycat
 #-------------------------------------------------------------------------#
-def ps1_query(name, radeg, dedeg, radius=1.0):
+def ps1_query(name, radeg, dedeg, path, radius=1.0):
 	"""
 	#	SELECT STARS FROM STARS & GALAXIES (iPSF - iKron <= 0.05)
 	https://outerspace.stsci.edu/display/PANSTARRS/How+to+separate+stars+and+galaxies#
@@ -215,10 +215,10 @@ def ps1_query(name, radeg, dedeg, radius=1.0):
 	querytbl['ymag']    = dum['ymag']
 	querytbl['e_ymag']  = dum['e_ymag']
 
-	querytbl.write(outname, format='ascii', overwrite=True)
+	querytbl.write(path+'/'+outname, format='ascii', overwrite=True)
 	return querytbl
 #-------------------------------------------------------------------------#
-def twomass_query(name, radeg, dedeg, band=None, radius=1.0):
+def twomass_query(name, radeg, dedeg, path, band=None, radius=1.0):
 	"""
 	QUERY Point Source Catalog(PSC) PROVIDED BY 2MASS
 	REMOVE COMTAMINATED SOURCE BY EXTENDED SOURCE AND MINOR PLANET
@@ -302,7 +302,7 @@ def twomass_query(name, radeg, dedeg, band=None, radius=1.0):
 	querytbl['Bflg']	= dum['Bflg']
 	querytbl['Cflg']	= dum['Cflg']
 
-	querytbl.write(outname, format='ascii', overwrite=True)
+	querytbl.write(path+'/'+outname, format='ascii', overwrite=True)
 	return querytbl
 #-------------------------------------------------------------------------#
 def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=str(3), dual=False, detect='detection.fits', check=False):
@@ -364,7 +364,8 @@ def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=st
 			+' -FILTER Y '+'-FILTER_NAME '+convfile
 	option3 = ' -PHOT_APERTURES '+aperture \
 			+' -GAIN '+'%.1f'%(gain)+' -PIXEL_SCALE '+'%.1f'%(pixscale)
-	option4 = ' -SEEING_FWHM '+'%.3f'%(seeing)+' -STARNNW_NAME '+nnwfile
+	#option4 = ' -SEEING_FWHM '+'%.3f'%(seeing)+' -STARNNW_NAME '+nnwfile
+	option4 = ' -SEEING_FWHM '+'%.3f'%(fwhm_arcsec)+' -STARNNW_NAME '+nnwfile
 	option5 = ' -BACK_SIZE '+ backsize \
 			+ ' -BACK_FILTERSIZE '+ backfiltersize+' -BACKPHOTO_TYPE LOCAL'
 	option6 = ' -CHECKIMAGE_TYPE SEGMENTATION,APERTURES,BACKGROUND,-BACKGROUND'
@@ -850,7 +851,7 @@ def zp_plot(inim, inmagkey, zp, zper, instmag0, refmag0, zplist0, instmag1, refm
 	plt.tight_layout()
 	plt.savefig(outname+'.zpcal.png', dpi = 500)
 	plt.close()
-
+	'''
 	magdif0		= (refmag0) - (instmag0+zp)
 	magdif1		= (refmag1) - (instmag1+zp)
 	#	POINT
@@ -872,6 +873,7 @@ def zp_plot(inim, inmagkey, zp, zper, instmag0, refmag0, zplist0, instmag1, refm
 	plt.tight_layout()
 	plt.savefig(outname+'.zpcal_test.png', dpi = 500)
 	plt.close()
+	'''
 	#	PRINT
 	print('MAG TYP\t\t: '+inmagkey)
 	print('ZP\t\t: '+str(round(zp, 3)))
@@ -900,9 +902,11 @@ def limitmag(N, zp, aper, skysigma):			# 3? 5?, zp, diameter [pixel], skysigma
 	upperlimit  = float(zp)-2.5*np.log10(braket)
 	return round(upperlimit, 3)
 #-------------------------------------------------------------------------#
-def puthdr(inim, hdrkey, content):
-	test	= 'MAKING'
-	return test
+def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
+	from astropy.io import fits
+	hdr		=	fits.getheader(inim)
+	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)	
+	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
 #-------------------------------------------------------------------------#
 def sqsum(a, b):
 	'''
@@ -1043,7 +1047,7 @@ def sedualcom(inim, gain, pixscale, det_sigma=1.5, backsize=str(64), backfilters
 			+' -FILTER Y '+'-FILTER_NAME '+convfile
 	option3 = ' -PHOT_APERTURES '+aperture \
 			+' -GAIN '+'%.1f'%(gain)+' -PIXEL_SCALE '+'%.1f'%(pixscale)
-	option4 = ' -SEEING_FWHM '+'%.3f'%(seeing)+' -STARNNW_NAME '+nnwfile
+	option4 = ' -SEEING_FWHM '+'%.3f'%(fwhm_arcsec)+' -STARNNW_NAME '+nnwfile
 	option5 = ' -BACK_SIZE '+ backsize \
 			+ ' -BACK_FILTERSIZE '+ backfiltersize+' -BACKPHOTO_TYPE LOCAL'
 	option6 = ' -CHECKIMAGE_TYPE SEGMENTATION,APERTURES,BACKGROUND,-BACKGROUND'

@@ -135,8 +135,8 @@ for inim in imlist:
 								inmagerkey=inmagerkey,
 								refmagkey=refmagkey,
 								refmagerkey=refmagerkey,
-								refmaglower=12,
-								refmagupper=16,
+								refmaglower=13,
+								refmagupper=16.5,
 								refmagerupper=0.05,
 								inmagerupper=0.1,
 								class_star_cut=0.001)
@@ -160,18 +160,31 @@ for inim in imlist:
 		if len(indx_target[0]) == 0:
 			aper	= 2*fwhm_pix
 			ul		= limitmag(3, zp, aper, skysig)
-			comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
-						+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
-						+'\t--\t\t\t'+'--\t' \
-						+'\t'+str(round(ul, 3))+'\t'+'0'+'\n'
+			try:
+				comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+							+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
+							+'\t--\t\t\t'+'--\t' \
+							+'\t'+str(round(ul, 3))+'\t'+'0'+'\n'
+			except:
+				comment		= inim+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+							+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
+							+'\t--\t\t\t'+'--\t' \
+							+'\t'+str(round(ul, 3))+'\t'+'0'+'\n'
 			print(comment)
 			f.write(comment)
 
 		else:
-			comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
-						+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
-						+'\t'+str(round(intbl[indx_target]['MAG_APER_7'][0], 3))+'\t\t'+str(round(intbl[indx_target]['MAGERR_APER_7'][0], 3)) \
-						+'\t'+str(round(intbl[indx_target]['REAL_MAG_APER_7'][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_MAGERR_APER_7'][0], 3))+'\n'
+			try:
+				comment		= inim+'\t\t'+hdr['date-obs']+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+							+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
+							+'\t'+str(round(intbl[indx_target]['MAG_APER_7'][0], 3))+'\t\t'+str(round(intbl[indx_target]['MAGERR_APER_7'][0], 3)) \
+							+'\t'+str(round(intbl[indx_target]['REAL_MAG_APER_7'][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_MAGERR_APER_7'][0], 3))+'\n'
+			except:
+				comment		= inim+'\t\t'+'MAG_APER_7'+'\t\t'+str(round(fwhm_arcsec, 3))+'\t\t' \
+							+str(round(zp, 3))+'\t'+str(round(zper, 3)) \
+							+'\t'+str(round(intbl[indx_target]['MAG_APER_7'][0], 3))+'\t\t'+str(round(intbl[indx_target]['MAGERR_APER_7'][0], 3)) \
+							+'\t'+str(round(intbl[indx_target]['REAL_MAG_APER_7'][0], 3))+'\t'+str(round(intbl[indx_target]['REAL_MAGERR_APER_7'][0], 3))+'\n'
+
 			print(comment)
 			f.write(comment)
 		#	PLOT IMAGE
