@@ -20,20 +20,23 @@ eventbl			= eventbl[eventbl['noise']!='o']
 #	Get the figure and the axes
 plt.close('all')
 fig, ax0	= plt.subplots(nrows=1, ncols=1, sharey=False, figsize=(10, 10))
-plt.rcParams.update({'font.size': 20})
+plt.rcParams.update({'font.size': 24})
 #ax0.fill_between(jdrange, imag-imagerr, imag+imagerr, color='dodgerblue', alpha=0.5, label='i-band')
 i=0
 for i in range(len(eventbl)):
-	x	= eventbl['delmjd'][i]
+	#x	= eventbl['delmjd'][i]
+	x	= eventbl['region'][i]
 	y	= eventbl['distmean'][i]
 	yerr= eventbl['diststd'][i]
 	capsize = 10
 
-	size= np.sqrt(eventbl['region'][i]*2/np.pi)
+	#size= np.sqrt(eventbl['region'][i]*2/np.pi)
+	size= 20
 
-
-	if		'Tera'in eventbl['prog'][i]:
-		color	= 'grey'
+#	if		'Tera'in eventbl['prog'][i]:
+#		color	= 'grey'
+	if	'Tera/BNS' in eventbl['prog'][i]:
+		color	= 'violet'
 	elif	'BHNS'in eventbl['prog'][i]:
 		color	= 'blue'
 	elif	'BNS' in eventbl['prog'][i]:
@@ -62,28 +65,28 @@ for i in range(len(eventbl)):
 #------------------------------------------------------------
 #	GW170817
 #------------------------------------------------------------
-params_plot	= dict(	x=-5, y=44.74, yerr=9,
-					marker='o', ms=np.sqrt(30/np.pi),
-					c='red', alpha=0.5,
+params_plot	= dict(	x=30, y=44.74, yerr=9,
+					marker='o', ms=20,
+					c='tomato', alpha=0.5,
 					capthick=1, capsize=10,
 					label='_nolegend_')
 ax0.errorbar(**params_plot)
 #------------------------------------------------------------
 #	LEGEND (DUMMY POINTS)
 #------------------------------------------------------------
-ax0.errorbar(	x=-99, y=-99, yerr=0,
+ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='dodgerblue', alpha=0.4,
 				label='BNS')
-ax0.errorbar(	x=-99, y=-99, yerr=0,
+ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='blue', alpha=0.4,
 				label='BNS/BHNS')
-ax0.errorbar(	x=-99, y=-99, yerr=0,
+ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='violet', alpha=0.5,
 				label='BNS/False Alarm')
-ax0.errorbar(	x=-99, y=-99, yerr=0,
+ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='dimgrey', alpha=0.4,
 				label='BBH')
@@ -94,7 +97,7 @@ ax0.scatter(	x=-99, y=-99,
 				label='False Alarm')
 '''
 #	GW170817
-params_plot	= dict(	x=-99, y=-99, yerr=0,
+params_plot	= dict(	x=-9999, y=-9999, yerr=0,
 					marker='o',
 					color='red', alpha=0.4,
 					label='GW170817')
@@ -105,10 +108,11 @@ ax0.errorbar(**params_plot)
 #fig.suptitle('S190425z', fontsize=14, fontweight='bold')
 #ax0.set(title='LIGO/Virgo O3 run', xlabel=r'$t-t_{0}$ [days]', ylabel='GW Luminosity Distance [Mpc]')#, fontsize=14)
 #ax0.set(xlabel=r'$t-t_{0}$ [days]', ylabel='GW Luminosity Distance [Mpc]')#, fontsize=14)
-ax0.set(xlabel='Since O3 run start [days]', ylabel='GW Luminosity Distance [Mpc]')#, fontsize=14)
-#ax0.set_ylim([24, 18])
-ax0.set_xlim([0,np.max(eventbl['delmjd']+5)])
-#ax0.set_yscale('log')
+ax0.set(xlabel='90% Skymap Size [deg2]', ylabel='GW Luminosity Distance [Mpc]')#, fontsize=14)
+ax0.set_xlim([20, 10000])
+ax0.set_ylim([20, 10000])
+ax0.set_yscale('log')
+ax0.set_xscale('log')
 param_legend	= dict(	loc='upper left', fontsize=20,
 						fancybox=True, framealpha=0.5,
 						scatterpoints=1, markerscale=2)
@@ -117,8 +121,9 @@ if 'O3_summary.png' in glob.glob('*png'):
 	os.system('mv O3_summary.png O3_summary.png.bkg')
 plt.minorticks_on()
 plt.tight_layout()
-plt.xticks(np.arange(0, 80, 10))
+#plt.xticks(np.arange(0, np.max(eventbl['region']), 1000))
 #------------------------------------------------------------
+'''
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 axins = zoomed_inset_axes(ax0, 20, loc='upper right') # zoom-factor: 2.5, location: upper-left
 params_plot	= dict(	x=-5, y=44.74, yerr=9,
@@ -134,5 +139,5 @@ axins.minorticks_on()
 plt.yticks(visible=True)
 plt.xticks(visible=False)
 plt.yticks(np.arange(30, 61, 10))
-
-plt.savefig(path_save+'/Figure_X+O3_summary.png')
+'''
+plt.savefig(path_save+'/Figure_X+O3_summary_ppt.png')

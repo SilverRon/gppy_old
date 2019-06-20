@@ -48,11 +48,11 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 #ra1, de1	= 94.09275, -21.35991111
 #ra1, de1	= 248.5427121, 19.634815
 #ra1, de1	= 208.3721617, 40.27532028		#	AT 2019ein
-#ra1, de1	= 185.733875, 15.826			#	SN2019ehk
+ra1, de1	= 185.733875, 15.826			#	SN2019ehk
 #ra1, de1	= 161.63775, 13.74194444		#	SN2018ek
 #ra1, de1	= 262.7914871, -8.450721945		#	ZTF19aarzaod
 #ra1, de1	= 258.341454, -9.964466			#	ZTF19aary
-ra1, de1	= 161.63775, +13.741944			#	SN2018kp
+#ra1, de1	= 161.63775, +13.741944			#	SN2018kp
 
 #	IMAGES TO CALC.
 #imlist		= glob.glob('Calib-*com.fits')
