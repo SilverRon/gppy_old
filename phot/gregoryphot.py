@@ -14,6 +14,7 @@ from astropy.wcs import WCS
 #from multiprocessing import Process, Pool
 #import multiprocessing as mp
 from imsng import phot
+import time
 #============================================================
 #	FUNCTION
 #============================================================
@@ -101,7 +102,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=13,
-						refmagupper=20,
+						refmagupper=17,
 						refmagerupper=0.05,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -189,7 +190,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	elif phottype == 'depth':
 		mag, mager	= None, None
 
-	onetbl	= Table([[inim], [obs], [obj], [radeg], [dedeg], [date_obs], [jd], [refmagkey], [len(otbl)], [zp], [zper], [seeing], [skymed], [skysig], [ul], [mag], [mager]],
+	onetbl	= Table([[inim], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
 					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'skyval', 'skysig', 'ul', 'mag', 'magerr'))
 	return onetbl
 #============================================================
@@ -210,19 +211,30 @@ os.system('ls *.fits')
 imlist		= glob.glob(input('image to process\t: '))
 imlist.sort()
 for img in imlist: print(img)
+
+photlist	= []
+refcatname	= 'PS1'
+#phottype	= 'subt'		#	(normal/subt/depth)
+phottype	= 'depth'
+starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
-photlist	= []
-refcatname	= 'PS1'
-phottype	= 'subt'		#	(normal/subt/depth)
 for inim in imlist:
-	param_phot	= dict(	inim=inim, refcatname='PS1', phottype='subt',
-						tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
-						detsig=3.0, frac=0.95)
-	photlist.append(phot_routine(**param_phot))
+	try:
+		param_phot	= dict(	inim=inim, refcatname='PS1', phottype=phottype,
+							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
+							detsig=3.0, frac=0.8)
+		photlist.append(phot_routine(**param_phot))
+		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
+	except:
+		pass
+#------------------------------------------------------------
+#	FINISH
+#------------------------------------------------------------
 photbl		= vstack(photlist)
 if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
 	os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
 photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
-os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
+deltime		= time.time() - starttime
+print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
