@@ -22,9 +22,12 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	#	HEADER INFO
 	hdr			= fits.getheader(inim)
-	radeg,dedeg	= hdr['CRVAL1'], hdr['CRVAL2']
 	w			= WCS(inim)
-	xcent, ycent= w.all_world2pix(radeg, dedeg, 1)
+	#radeg,dedeg	= hdr['CRVAL1'], hdr['CRVAL2']
+	#xcent, ycent= w.all_world2pix(radeg, dedeg, 1)
+	xcent, ycent= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+	radeg, dedeg= w.all_pix2world(xcent, ycent, 1)
+	radeg, dedeg= np.asscalar(radeg), np.asscalar(dedeg)
 	#------------------------------------------------------------
 	try:
 		date_obs	= hdr['date-obs']
@@ -101,7 +104,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						inmagerkey=aperture,
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
-						refmaglower=13,
+						refmaglower=10,
 						refmagupper=17,
 						refmagerupper=0.05,
 						inmagerupper=0.1)
@@ -156,7 +159,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		if indx_targ != None:
 			mag, mager	= intbl[indx_targ]['REAL_'+inmagkey], intbl[indx_targ]['REAL_'+inmagerkey]
 		else:
-			mag, mager	= None, None
+			mag, mager	= -99, -99
 	#------------------------------------------------------------
 	#	SUBTRACTION PHOTOMETRY
 	#------------------------------------------------------------
@@ -183,12 +186,12 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		if indx_targ != None:
 			mag, mager	= subtbl[indx_targ]['REAL_'+inmagkey], subtbl[indx_targ]['REAL_'+inmagerkey]
 		else:
-			mag, mager	= None, None
+			mag, mager	= -99, -99
 	#------------------------------------------------------------
 	#	CALC. DEPTH
 	#------------------------------------------------------------
 	elif phottype == 'depth':
-		mag, mager	= None, None
+		mag, mager	= -99, -99
 
 	onetbl	= Table([[inim], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
 					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'skyval', 'skysig', 'ul', 'mag', 'magerr'))
@@ -213,18 +216,18 @@ imlist.sort()
 for img in imlist: print(img)
 
 photlist	= []
-refcatname	= 'PS1'
-#phottype	= 'subt'		#	(normal/subt/depth)
-phottype	= 'depth'
+refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
+phottype	= 'subt'		#	(normal/subt/depth)
+#phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
 for inim in imlist:
 	try:
-		param_phot	= dict(	inim=inim, refcatname='PS1', phottype=phottype,
+		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
 							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
-							detsig=3.0, frac=0.8)
+							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
 		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
 	except:

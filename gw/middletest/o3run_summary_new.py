@@ -1,5 +1,6 @@
 #   O3 RUN SUMMARY PLOT
 #   2019.05.29 MADE		BY Gregory S.H. Paek
+#	2019.07.08 UPDATED	BY Gregory S.H. Paek
 #============================================================#
 #	MODULE
 #------------------------------------------------------------#
@@ -12,7 +13,7 @@ path_table		= '/mnt/window/Users/User/Downloads/data/Project/gw/bayestar/sel/O3r
 path_save	= '/home/sonic/S190425z'
 
 eventbl			= ascii.read(path_table)
-eventbl			= eventbl[eventbl['noise']!='o']
+#eventbl			= eventbl[eventbl['noise']!='o']
 #------------------------------------------------------------
 #	PLOT 1	: TIME - MAG.
 #------------------------------------------------------------
@@ -25,17 +26,17 @@ plt.rcParams.update({'font.size': 24})
 i=0
 for i in range(len(eventbl)):
 	#x	= eventbl['delmjd'][i]
-	x	= eventbl['region'][i]
-	y	= eventbl['distmean'][i]
+	x	= eventbl['cr'][i]
+	y	= eventbl['dist'][i]
 	yerr= eventbl['diststd'][i]
 	capsize = 10
 
-	#size= np.sqrt(eventbl['region'][i]*2/np.pi)
+	#size= np.sqrt(eventbl['cr'][i]*2/np.pi)
 	size= 20
 
 #	if		'Tera'in eventbl['prog'][i]:
 #		color	= 'grey'
-	if	'Tera/BNS' in eventbl['prog'][i]:
+	if	'BNS/False' in eventbl['prog'][i]:
 		color	= 'violet'
 	elif	'BHNS'in eventbl['prog'][i]:
 		color	= 'blue'
@@ -49,12 +50,14 @@ for i in range(len(eventbl)):
 		color	= 'brown'
 	marker		= 'o'
 #------------------------------------------------------------
+	'''
 	if		eventbl['noise'][i]=='o':
 		marker	= 'x'
 		color	= 'black'
 		size	= 15
 		yerr	= 0
 		capsize = 0
+	'''
 #------------------------------------------------------------
 	params_plot	= dict(	x=x, y=y, yerr=yerr,
 						marker=marker, ms=size,
@@ -85,7 +88,7 @@ ax0.errorbar(	x=-999, y=-999, yerr=0,
 ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='violet', alpha=0.5,
-				label='BNS/False Alarm')
+				label='BNS/False')
 ax0.errorbar(	x=-999, y=-999, yerr=0,
 				marker='o',
 				c='dimgrey', alpha=0.4,
@@ -121,7 +124,7 @@ if 'O3_summary.png' in glob.glob('*png'):
 	os.system('mv O3_summary.png O3_summary.png.bkg')
 plt.minorticks_on()
 plt.tight_layout()
-#plt.xticks(np.arange(0, np.max(eventbl['region']), 1000))
+#plt.xticks(np.arange(0, np.max(eventbl['cr']), 1000))
 #------------------------------------------------------------
 '''
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes

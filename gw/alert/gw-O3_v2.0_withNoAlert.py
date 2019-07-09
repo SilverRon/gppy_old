@@ -33,7 +33,7 @@ os.system('ls *.fits *fits.gz')
 healpixfits	= input('BAYSTAR PATH\t: ')
 confidence	= float(input('CONFIDENCE (0.5,0.9)\t: '))
 role, eventname	= input('ROLE (test,observation)\t: '), input('EVENTNAME (test)\t: ')
-if confidence	== '': confidence = 0.5
+if confidence	== '': confidence = 0.9
 if role			== '': role = 'test'
 if eventname	== '': eventname = 'test'
 #------------------------------------------------------------#
