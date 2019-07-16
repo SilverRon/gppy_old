@@ -87,7 +87,7 @@ def process_gcn(payload, root):
 	print('0-2.\tDOWNLOAD BAYESTER FILE')
 	healpixfits	= params['skymap_fits']
 	os.system('wget {0}'.format(healpixfits))
-	os.system('mv {0} {1}'.format(os.path.basename(healpixfits), save_path+'/'+eventname))
+	os.system('mv {0} {1}'.format(os.path.basename(healpixfits), save_path+'/'+eventname+'.fits.gz'))
 	#------------------------------------------------------------#
 	#	1. bayestar.fits -> RA/Dec/P_2D TABLE
 	#------------------------------------------------------------#

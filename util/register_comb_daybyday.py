@@ -64,7 +64,7 @@ def imcombine(imlist):
 		compart			= refim.split('-')
 		compart[0], compart[4], compart[6]	= 'Calib', utformat, compart[6][:-5]+'-com.fits'
 		comin			= '-'.join(compart)
-	
+	'''
 	jdmean, utmean	= centertime2(imlist)
 	utpart			= utmean.split('T')[1].split(':')
 	utpart[2]		= str(int(float(utpart[2])))
@@ -79,6 +79,7 @@ def imcombine(imlist):
 	fits.writeto(comin, comdata, comhdr, clobber=True)
 	deltime		= time.time() - starttime
 	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
+	
 #-------------------------------------------------------------
 def centertime(imlist) :	
 	'''

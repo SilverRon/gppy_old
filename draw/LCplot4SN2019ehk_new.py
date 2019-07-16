@@ -1,6 +1,7 @@
 #============================================================
 #	LIGHT CURVE FUNCTION FOR GRB/SN/... etc.
 #	2019.05.03. MADE BY GREGORY S.H. PAEK
+#	2019.07.16. MADE BY GREGORY S.H. PAEK
 #============================================================
 import numpy as np
 from astropy.io import ascii
@@ -144,6 +145,7 @@ ax1		= plt.legend(loc='best')
 #ax1		= plt.axhline(y=21, color='gray', linestyle='--')
 
 filename	= target+'_LC'
+plt.minorticks_on()
 plt.savefig(path_save+'/'+filename+'.png')#, dpi = 500)
 
 

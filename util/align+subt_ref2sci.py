@@ -1,7 +1,6 @@
 #============================================================
 #	PYTHON SCRIPT FOR SUBTRACTION USING HOTPANTS
 #	Usage : 
-#	python hotpantsrun.py str1 ref_image
 #	OR JUST RUN AND WRITE INPUT & REF IMAGE
 #	2019.07.05	GREGORY S.H. PAEK
 #============================================================
