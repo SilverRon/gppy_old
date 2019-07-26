@@ -23,8 +23,8 @@ def imcopy(inim, ranges):
 #============================================================
 obsinfo			= ascii.read('/home/sonic/Research/table/obs.txt')
 path_catalog	= '/mnt/window/Users/User/Downloads/data/catalog'
-path_kmtnet		= '/mnt/window/Users/User/Downloads/data/Project/gw/S190425z/KMTNet/try1'
-path_qso		= '/data3/jkim/GW190425z'
+path_kmtnet		= '/data1/S190425z/KMTNet'
+path_qso		= '/data3/jkim/GW190425z/done'
 kmtbl			= ascii.read(path_kmtnet+'/kmtn_radec.dat')
 downcom			= 'sshpass -prjseka23! scp -ro StrictHostKeyChecking=no paek@qso.snu.ac.kr:'
 ra1, de1		= 0, 0
@@ -39,7 +39,10 @@ ranges			= '[{}:{},{}:{}]'.format(int(x0-x/4), int(x0+x/4), int(y0-y/4), int(y0+
 #============================================================
 imfail	= []
 tblist	= []
+i=0
 for image in kmtbl['image']:
+	i+=1
+	print('PROCESS [{}/{}]\t: {}'.format(i, len(kmtbl['image']), image))
 	os.system(downcom+path_qso+'/'+image+' ./')
 	query_checklist = glob.glob(path_catalog+'/*.cat')
 	os.system('imcopy {}{} {}'.format(image, ranges, 'tr'+image))

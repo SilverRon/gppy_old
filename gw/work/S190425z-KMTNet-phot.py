@@ -1,5 +1,6 @@
-#	PHOTOMETRY CODE FOR PYTHON 3.X
+#	PHOTOMETRY CODE FOR PYTHON 3.X, AND BULK OF KMTNet IMAGES
 #	CREATED	2019.06.20	Gregory S.H. Paek
+#	MODIFIED 2019.07.26 Gregory S.H. Paek
 #============================================================
 import os, glob
 import numpy as np
@@ -40,9 +41,10 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		jd			= None
 	#------------------------------------------------------------
 	#	NAME INFO
-	part			= inim.split('-')
-	obs, obj		= part[1], part[2]
-	refmagkey		= part[5]
+	# part			= inim.split('-')
+	# obs, obj		= part[1], part[2]
+	# refmagkey		= part[5]
+	obs, obj, refmagkey = 'KMTNET', inim[:-5], 'R'
 	refmagerkey 	= refmagkey+'err'
 	indx_obs		= np.where(obstbl['obs']==obs)
 	gain, pixscale	= obstbl[indx_obs]['gain'][0], obstbl[indx_obs]['pixelscale'][0]
@@ -53,7 +55,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	if		refcatname	== 'PS1':
 		if path_refcat+'/ps1-'+obj+'.cat' not in refcatlist:
-			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=3.0)
+			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=1.5)
 		else:
 			querytbl	= ascii.read(path_refcat+'/ps1-'+obj+'.cat')
 		reftbl, refcat  = phot.ps1_Tonry(querytbl, obj)
@@ -84,7 +86,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	peeing, seeing	= phot.psfex(inim, pixscale)
 	param_secom	= dict(	inim=inim,
 						gain=gain, pixscale=pixscale, seeing=seeing,
-						det_sigma=detsig,
+						det_sigma=10,
 						backsize=str(64), backfiltersize=str(3),
 						psf=True, check=False)
 	intbl0, incat	= phot.secom(**param_secom)
@@ -108,7 +110,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=10,
-						refmagupper=20,
+						refmagupper=17,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -200,7 +202,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	elif phottype == 'depth':
 		mag, mager	= -99, -99
 
-	onetbl	= Table([[inim], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
+	onetbl	= Table([[inim[2:]], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
 					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'skyval', 'skysig', 'ul', 'mag', 'magerr'))
 	return onetbl
 #============================================================
@@ -217,7 +219,7 @@ tra, tdec	= 185.733875, 15.826			#	SN2019ehk
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
 #------------------------------------------------------------
-os.system('ls *.fits')
+os.system('ls tr*.fits')
 imlist		= glob.glob(input('image to process\t: '))
 imlist.sort()
 for img in imlist: print(img)
@@ -233,6 +235,7 @@ starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
+photfail = []
 for inim in imlist:
 	try:
 		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
@@ -241,6 +244,7 @@ for inim in imlist:
 		photlist.append(phot_routine(**param_phot))
 		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
 	except:
+		photfail.append(inim)
 		pass
 #------------------------------------------------------------
 #	FINISH

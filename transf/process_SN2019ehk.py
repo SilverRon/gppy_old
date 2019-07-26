@@ -69,7 +69,7 @@ def centertime2(imlist) :
 #------------------------------------------------------------
 #	DOWNLOAD FILES FROM QSO SERVER
 #------------------------------------------------------------
-downcom		= 'sshpass -prjseka23! scp -ro StrictHostKeyChecking=no paek@qso.snu.ac.kr:'+path_qso+'/Calib-*-'+date+'*.fits '+path_gundam+'/'
+# downcom		=
 print(downcom);os.system(downcom)
 #------------------------------------------------------------
 #	ARANGE FILES FOR EACH BANDS

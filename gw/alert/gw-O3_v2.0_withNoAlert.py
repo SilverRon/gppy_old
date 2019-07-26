@@ -31,11 +31,13 @@ catpath		= '/home/sonic/Research/cat/GLADE2.3/GLADE_2.3+2MASS_PSC+identi_name.da
 #------------------------------------------------------------#
 os.system('ls *.fits *fits.gz')
 healpixfits	= input('BAYSTAR PATH\t: ')
-confidence	= float(input('CONFIDENCE (0.5,0.9)\t: '))
-role, eventname	= input('ROLE (test,observation)\t: '), input('EVENTNAME (test)\t: ')
-if confidence	== '': confidence = 0.9
-if role			== '': role = 'test'
-if eventname	== '': eventname = 'test'
+# confidence	= float(input('CONFIDENCE (0.5,0.9)\t: '))
+# role, eventname	= input('ROLE (test,observation)\t: '), input('EVENTNAME (test)\t: ')
+# if confidence	== '': confidence = 0.9
+# if role			== '': role = 'test'
+# if eventname	== '': eventname = 'test'
+confidence, role, eventname = 0.9, 'observation', 'S190425z_Update'
+
 #------------------------------------------------------------#
 save_healfix	= './'
 save_path		= save_healfix+eventname
@@ -85,9 +87,10 @@ comment		= '\nMATHCING END\n'; print(comment)
 dummytbl		= cattbl[indx_match]
 dummytbl['sep']	= d2d
 dummytbl['P_2D']= healtbl['P_2D']
+n=1
 matchtbl0		= dummytbl[	(dummytbl['sep']*3600. < maxerr) &
-							(dummytbl['dist'] > gwdist-gwdiststd) &
-							(dummytbl['dist'] < gwdist+gwdiststd)]
+							(dummytbl['dist'] > gwdist-n*gwdiststd) &
+							(dummytbl['dist'] < gwdist+n*gwdiststd)]
 #	REMOVE OVERAP
 voidlst			= []
 for i in matchtbl0['dist']:
@@ -225,7 +228,7 @@ rtstbl		= Table()
 rtstbl['name'], rtstbl['ra'], rtstbl['dec'], rtstbl['sort'], rtstbl['rank'], rtstbl['dist']	= cantbl['iden_name'], cantbl['ra'], cantbl['dec'], cantbl['sort'], cantbl['rank'], cantbl['dist']
 rtstbl.write(save_path+'/'+eventname+'-rts_candi.txt', format='ascii', overwrite=True)
 
-obspath		= '/home/gw/Research/observatory.txt'
+'''obspath		= '/home/gw/Research/observatory.txt'
 catpath		= save_path+'/'+eventname+'-rts_candi.txt'
 for obs in ['SAO', 'McD', 'MAO', 'LOAO', 'SSO', 'UKIRT']:#, 'Spain', 'NMex', 'Calif']:
 	print(obs)
@@ -240,7 +243,7 @@ for obs in ['SAO', 'McD', 'MAO', 'LOAO', 'SSO', 'UKIRT']:#, 'Spain', 'NMex', 'Ca
 						moonseperation=40.,
 						sunlimit='-18',
 						numlimit=300)
-	tool.rtsmaker(**param_rts)
+	tool.rtsmaker(**param_rts)'''
 #------------------------------------------------------------#
 #	7.	SEND MAIL
 #------------------------------------------------------------#

@@ -87,34 +87,51 @@ def plotshow(inim, tnames, tx, ty):
 				frameon=None, metadata=None)
 
 #------------------------------------------------------------#
-# path_table = '/mnt/window/Users/User/Downloads/data/Project/gw/S190425z/info/S190425z_Update-all_candidates.txt'
-path_table = '/data1/S190425z/info/Initial/S190425z_Initial-all_candi.txt'
-# path_table = input('INPUT TABLE\t: ')
-# imlist = glob.glob('*.fits')
-imlist = glob.glob('*.fits')
+#------------------------------------------------------------#
+imlist = glob.glob('*Calib*.fits')
 # imlist = glob.glob(input('IMAGE TO INVESTIGATE\t: '))
 # path_obs = '/home/sonic/Research/table/telescope.info'
-targtbl = ascii.read(path_table)
 # obstbl = ascii.read(path_obs)
 namekey = 'name'
 #------------------------------------------------------------#
+path_table = '/data1/S190425z/info/Initial/S190425z_Initial-all_candi.txt'
+targtbl = ascii.read(path_table)
 tblist = []
-tname = np.copy(targtbl[namekey])
-tra = np.copy(targtbl['ra'])
-tdec = np.copy(targtbl['dec'])
-
 i=0
 for inim in imlist:
 	i+=1
 	print('PROCESS [{}/{}]\t: {}'.format(i, len(imlist), inim))
 	param_infov = dict(	inim=inim,
-						tname=tname,
-						tra=tra,
-						tdec=tdec,
+						tname=targtbl[namekey],
+						tra=targtbl['ra'],
+						tdec=targtbl['dec'],
 						namekey=namekey,
 						draw=True)
 	tblist.append(infov(**param_infov))
 comtbl = vstack(tblist)
-if 'inthefov.dat' in glob.glob('inthefov.dat'):
-	os.system('mv inthefov.dat inthefov.dat.bkg')
-comtbl.write('inthefov.dat', format='ascii', overwrite=True)
+if 'inthefov_initial.dat' in glob.glob('inthefov_initial.dat'):
+	os.system('mv inthefov_initial.dat inthefov_initial.dat.bkg')
+comtbl.write('inthefov_initial.dat', format='ascii', overwrite=True)
+#------------------------------------------------------------#
+path_table = '/data1/S190425z/info/Update/S190425z_Update-all_candi.txt'
+targtbl = ascii.read(path_table)
+tblist = []
+failist = []
+i=0
+for inim in imlist:
+	i+=1
+	print('PROCESS [{}/{}]\t: {}'.format(i, len(imlist), inim))
+	param_infov = dict(	inim=inim,
+						tname=targtbl[namekey],
+						tra=targtbl['ra'],
+						tdec=targtbl['dec'],
+						namekey=namekey,
+						draw=True)
+	if 'scCalib' not in inim:
+		tblist.append(infov(**param_infov))
+
+comtbl = vstack(tblist)
+if 'inthefov_update.dat' in glob.glob('inthefov_update.dat'):
+	os.system('mv inthefov_update.dat inthefov_update.dat.bkg')
+comtbl.write('inthefov_update.dat', format='ascii', overwrite=True)
+

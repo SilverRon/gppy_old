@@ -39,7 +39,7 @@ def gregistering(images_to_align, ref_image):
 	deltime		= time.time() - starttime
 	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
 #-------------------------------------------------------------
-def imcombine(imlist):
+def imcombine(imlist, timemode):
 	refim		= imlist[0]
 	starttime	= time.time()
 	print('LIST '+str(len(imlist)))
@@ -48,7 +48,7 @@ def imcombine(imlist):
 		print(inim)
 		f.write(inim+'\n')
 	f.close()
-	try:
+	if timemode == 0:
 		jdmean, utmean	= centertime(imlist)
 		utpart			= utmean.split('T')[1].split(':')
 		utpart[2]		= str(int(float(utpart[2])))
@@ -56,7 +56,7 @@ def imcombine(imlist):
 		compart			= refim.split('-')
 		compart[0], compart[4], compart[6]	= 'Calib', utformat, compart[6][:-5]+'-com.fits'
 		comin			= '-'.join(compart)
-	except:
+	if timemode == 1:
 		jdmean, utmean	= centertime2(imlist)
 		utpart			= utmean.split('T')[1].split(':')
 		utpart[2]		= str(int(float(utpart[2])))
@@ -104,12 +104,12 @@ def centertime2(imlist) :
 	ttjdmeanutc	= Time(ttjdmean,format='jd',scale='utc')
 	return ttjdmean, ttjdmeanutc.isot
 #-------------------------------------------------------------
-def align_imcomb_seq(imlist, refim):
+def align_imcomb_seq(imlist, refim, timemode):
 	gregistering(imlist, refim)
 	alignlist	= []
 	for inim in imlist:
 		alignlist.append(inim[:-5]+'_gregister.fits')
-	imcombine(alignlist)
+	imcombine(alignlist, timemode)
 #------------------------------------------------------------
 #	INPUT
 #------------------------------------------------------------
@@ -135,7 +135,8 @@ for obj in objlist:
 	prolist	= glob.glob('*'+obj+'*.fits')
 	if len(prolist) > 1:
 		try:
-			align_imcomb_seq(prolist, prolist[0])
+			#timemode =0 for others, =1 for SQUEAN
+			align_imcomb_seq(prolist, prolist[0], timemode=1)
 			#os.system('mv *'+obj+'*.fits multi_images')
 		except:
 			imfail.append(prolist)

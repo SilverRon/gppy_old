@@ -17,7 +17,7 @@ def astrometry(imlist, pixelscale):
 	scale_high      = str( float(pixelscale) + (float(pixelscale)*0.1) )
 	n	= 1
 	for inim in imlist:
-		com		= 'solve-field '+inim+' --scale-unit arcsecperpix --scale-low '+scale_low+' --scale-high '+scale_high+ ' --no-plots --new-fits a'+inim+' --overwrite --temp-dir ./ '+ '--cpulimit 180 --use-sextractor\n'
+		com		= 'solve-field '+inim+' --scale-unit arcsecperpix --scale-low '+scale_low+' --scale-high '+scale_high+ ' --no-plots --new-fits a'+inim+' --overwrite --temp-dir ./ '+ '--cpulimit 90 --use-sextractor\n'
 		print('['+str(n)+'/'+str(len(imlist))+']'); n += 1
 		print(com)
 		os.system(com)

@@ -5,6 +5,7 @@
 #============================================================
 #	MODULE
 #------------------------------------------------------------
+from ligo.skymap.postprocess import find_greedy_credible_levels
 import gcn
 import gcn.handlers
 import gcn.notice_types
@@ -25,16 +26,29 @@ from scipy.stats import norm
 import scipy.stats
 #============================================================
 url			= 'https://dcc.ligo.org/public/0146/G1701985/001/bayestar.fits.gz'
-filename	= astropy.utils.data.download_file(url)
+# filename	= astropy.utils.data.download_file(url)
+filename	= 'S190425z-Update-bayestar.fits.gz'
+hpx, hdr	= hp.read_map(filename, verbose=True, h=True)
+hdr			= dict(hdr)
 prob, distmu, distsigma, distnorm = hp.read_map(filename,
-												field=[0, 1, 2, 3],
+												#field=[0, 1, 2, 3],
+												field=range(4),
 												dtype=('f8', 'f8', 'f8', 'f8'))
+credible_levels = find_greedy_credible_levels(prob)
+indx = np.where(credible_levels <= 0.9)
+# prob, distmu,  distsigma, distnorm = prob[indx], distmu[indx],  distsigma[indx], distnorm[indx]
+
+
 npix		= len(prob)
 nside		= hp.npix2nside(npix)
-pixarea		= hp.nside2pixarea(nside)
+pixarea		= hp.nside2pixarea(nside)		
+pixarea_deg2= hp.nside2pixarea(nside, degrees=True)
 #------------------------------------------------------------
 path_cat	= '/home/sonic/Research/cat/GLADE2.3/GLADE_2.3+2MASS_PSC+identi_name.dat'
-gldtbl		= Table.read(path_cat, format='ascii')
+gldtbl0		= Table.read(path_cat, format='ascii')
+n=1
+gldtbl		= gldtbl0[	(gldtbl0['dist']<=hdr['DISTMEAN']+n*hdr['DISTSTD'])&
+						(gldtbl0['dist']>=hdr['DISTMEAN']-n*hdr['DISTSTD'])]
 gldcoord	= SkyCoord(ra=gldtbl['ra']*u.deg, dec=gldtbl['dec']*u.deg)
 ngld		= np.size(gldtbl)
 
@@ -45,12 +59,15 @@ probAcol	= Column(np.zeros(ngld, dtype='f4'), name='P_A')
 gldtbl.add_columns([probdencol, probcol, probdenAcol, probAcol])
 #------------------------------------------------------------
 #get coord of max prob density for plotting purposes
-#ipix_max=np.where(prob == np.max(prob))
 ipix_max	= np.argmax(prob)
 theta_max, phi_max = hp.pix2ang(nside, ipix_max)
 ra_max, dec_max	= np.rad2deg(phi_max), np.rad2deg(0.5 * np.pi - theta_max)
 # ra_max, dec_max	= hp.pix2ang(nside, ipix_max, lonlat=True)
 center		= SkyCoord(ra=ra_max*u.deg, dec=dec_max*u.deg)
+# ipix		= np.arange(0, npix, step=1)
+# theta, phi	= hp.pix2ang(nside, ipix)
+# ra, dec		= np.rad2deg(phi), np.rad2deg(0.5 * np.pi - theta)
+
 '''
 #------------------------------------------------------------
 #	PLOT
@@ -72,46 +89,28 @@ ax.plot(center.ra.deg, center.dec.deg,
 theta	= 0.5 * np.pi - gldcoord.dec.to('rad').value
 phi		= gldcoord.ra.to('rad').value
 ipix	= hp.ang2pix(nside, theta, phi)
+cumP2D	= np.cumsum(prob[np.argsort(-1*prob)])[ipix]
+'''
+ipix[cumP2D < 0.9]
+ipix[cumP2D < 0.9]
+dp_dV	= prob[ipix[cumP2D < 0.9]] * distnorm[ipix[cumP2D < 0.9]] * norm(distmu[ipix[cumP2D < 0.9]],distsigma[ipix[cumP2D < 0.9]]).pdf(gldtbl[cumP2D < 0.9]['dist'])/pixarea 
+'''
+#calc probability (P_2D)
+dp_dA		= prob[ipix]/pixarea
+dp_dA_deg2	= prob[ipix]/pixarea_deg2
 #calc probability density per volume for each galaxy
 dp_dV	= prob[ipix] * distnorm[ipix] * norm(distmu[ipix],distsigma[ipix]).pdf(gldtbl['dist'])/pixarea 
+#------------------------------------------------------------
 gldtbl['dP_dV']	= dp_dV
+gldtbl['dP_dA']	= dp_dA
+gldtbl['Prob']	= gldtbl['dist']**2 * 10**(-0.4*gldtbl['K']) * gldtbl['dP_dV']
+#------------------------------------------------------------
+cantbl			= gldtbl[	(gldtbl['K']!=-99.0)&
+							(gldtbl['dist']!=-99.0)&
+							(gldtbl['Prob']!=0.0)]
+cantbl['Prob']	= cantbl['Prob']/np.sum(cantbl['Prob'])
+cantbl.sort('Prob')
+cantbl.reverse()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#calc probability density per area on the sky for each galaxy
-#Have them figure out dp_da, but help them a bit for the radial and volume calculation. 
-#maybe point them to Leo's 2016 supplement paper???
-ipix_nparr  = np.linspace(0, npix, npix, dtype=int)
-#   NEED TO CONVERT NUMPY ARRAY TO LIST (WHY?)
-ipix		= ipix_nparr#ipix        = ipix_nparr.tolist()
-
-dp_dA=prob[ipix]/pixarea
-gldtbl['dP_dA']=dp_dA
-
-#probability along radial distance
-dp_dr=gldtbl['dist']**2 * distnorm[ipix] * norm(distmu[ipix],distsigma[ipix]).pdf(gldtbl['dist'])
-
-#calc probability density per volume for each galaxy
-dp_dV=prob[ipix] * distnorm[ipix] * norm(distmu[ipix],distsigma[ipix]).pdf(gldtbl['DISTMPC'])/pixarea 
-gldtbl['dP_dV']=dp_dV
+subtbl			= cantbl[np.cumsum(cantbl['Prob'])<=0.9]
+# cantbl['']		= cantbl[np.argsort(-1*cantbl['Prob'])]
