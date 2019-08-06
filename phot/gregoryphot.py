@@ -108,7 +108,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=10,
-						refmagupper=20,
+						refmagupper=17,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -227,8 +227,8 @@ refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
 # refcatname	= 'SDSS'
 # refcatname	= 'APASS'
 # refcatname	= '2MASS'
-# phottype	= 'subt'		#	(normal/subt/depth)
-phottype	= 'depth'
+phottype	= 'subt'		#	(normal/subt/depth)
+# phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND

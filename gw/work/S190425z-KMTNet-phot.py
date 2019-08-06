@@ -23,6 +23,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	#	HEADER INFO
 	hdr			= fits.getheader(inim)
+	'''
 	try:
 		w			= WCS(inim)
 		radeg, dedeg= w.all_pix2world(xcent, ycent, 1)
@@ -31,7 +32,12 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		print('BAD WCS INFORMATION?')
 		radeg,dedeg	= hdr['CRVAL1'], hdr['CRVAL2']
 	#xcent, ycent= w.all_world2pix(radeg, dedeg, 1)
+	'''
+	w			= WCS(inim)
 	xcent, ycent= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+
+	radeg, dedeg= w.all_pix2world(xcent, ycent, 1)
+	radeg, dedeg= np.asscalar(radeg), np.asscalar(dedeg)
 	#------------------------------------------------------------
 	try:
 		date_obs	= hdr['date-obs']
@@ -74,6 +80,15 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 			querytbl        = ascii.read(path_refcat+'/apass-'+obj+'.cat')
 		reftbl, refcat  = phot.apass_Blaton(querytbl, obj)
 	#------------------------------------------------------------
+	elif	refcatname	== 'NOMAD':
+		if path_refcat+'/nomad-'+obj+'.cat' not in refcatlist:
+			querytbl        = phot.nomad_query(obj, radeg, dedeg, path_refcat, radius=3.0)
+		else:
+			querytbl        = ascii.read(path_refcat+'/nomad-'+obj+'.cat')
+		# reftbl, refcat  = phot.apass_Blaton(querytbl, obj)
+		reftbl = querytbl
+		reftbl['ra'], reftbl['dec'], reftbl['R'], reftbl['Rerr'] = querytbl['RAJ2000'], querytbl['DEJ2000'], querytbl['Rmag'], np.zeros(len(querytbl))
+	#------------------------------------------------------------
 	elif	refcatname	== '2MASS':
 		if path_refcat+'/2mass-'+obj+'.cat' not in refcatlist:
 			querytbl        = phot.twomass_query(obj, radeg, dedeg, path_refcat, band=refmagkey, radius=1.0)
@@ -84,9 +99,13 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#	SourceEXtractor
 	#------------------------------------------------------------
 	peeing, seeing	= phot.psfex(inim, pixscale)
+
+	if seeing == 0.0:
+		seeing = 5.0
+
 	param_secom	= dict(	inim=inim,
 						gain=gain, pixscale=pixscale, seeing=seeing,
-						det_sigma=10,
+						det_sigma=3,
 						backsize=str(64), backfiltersize=str(3),
 						psf=True, check=False)
 	intbl0, incat	= phot.secom(**param_secom)
@@ -95,6 +114,10 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	indx_dist	= np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
 	intbl		= intbl0[indx_dist]
 	intbl.write(incat, format='ascii', overwrite=True)
+
+	peeing = np.median(intbl['FWHM_IMAGE'])
+	seeing = peeing*pixscale
+
 	#	MATCHING
 	param_match	= dict(	intbl=intbl, reftbl=reftbl,
 						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
@@ -109,7 +132,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						inmagerkey=aperture,
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
-						refmaglower=10,
+						refmaglower=14,
 						refmagupper=17,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
@@ -225,9 +248,10 @@ imlist.sort()
 for img in imlist: print(img)
 
 photlist	= []
-refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
+# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS/NOMAD)
 # refcatname	= 'SDSS'
-# refcatname	= 'APASS'
+refcatname	= 'APASS'
+# refcatname	= 'NOMAD'
 # refcatname	= '2MASS'
 # phottype	= 'subt'		#	(normal/subt/depth)
 phottype	= 'depth'
@@ -240,7 +264,7 @@ for inim in imlist:
 	try:
 		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
 							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
-							detsig=3.0, frac=0.9)
+							detsig=3.0, frac=0.99)
 		photlist.append(phot_routine(**param_phot))
 		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
 	except:

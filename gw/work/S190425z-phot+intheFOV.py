@@ -2,30 +2,67 @@
 #	CREATED	2019.06.20	Gregory S.H. Paek
 #	MODIFIED 2019.07.26 Gregory S.H. Paek
 #============================================================
+import os
+import glob
 import os, glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table, vstack
 from astropy.io import ascii
 from astropy.time import Time
-#from multiprocessing import Process, Pool
-#import multiprocessing as mp
 import time
-#============================================================
 photbl = ascii.read('phot.dat')
-iphtbl, uphtbl = photbl, photbl
-initbl = ascii.read('inthefov_initial.dat')
-updtbl = ascii.read('inthefov_update.dat')
+#============================================================
+#	INITIAL
 #------------------------------------------------------------
-sourini, sourupd = [], []
+iphtbl = photbl
+initbl = ascii.read('inthefov_initial.dat')
+#------------------------------------------------------------
+sourini = []
 for inim in photbl['image']:
 	indxini = np.where(iphtbl['image']==inim)
-	sourini.append(np.copy(initbl['sources'][indxini])[0])
-	indxupd = np.where(uphtbl['image']==inim)
-	sourupd.append(np.copy(updtbl['sources'][indxupd])[0])
+	sourini.append(np.asscalar(initbl['sources'][indxini]))
+iphtbl['sources'] = np.array(sourini)
 #------------------------------------------------------------
-sourini, sourupd = np.array(sourini), np.array(sourupd)
-iphtbl['sources'], uphtbl['sources'] = sourini, sourupd
-#------------------------------------------------------------
+if 'phot_ini_sources.dat' in glob.glob('*.dat'):
+	os.system('mv phot_ini_sources.dat phot_ini_sources.dat.bkg')
 iphtbl.write('phot_ini_sources.dat', format='ascii')
+#============================================================
+#	UPDATE
+#------------------------------------------------------------
+uphtbl = photbl
+updtbl = ascii.read('inthefov_update.dat')
+#------------------------------------------------------------
+sourupd = []
+for inim in photbl['image']:
+	indxupd = np.where(uphtbl['image']==inim)
+	sourupd.append(np.asscalar(updtbl['sources'][indxupd]))
+uphtbl['sources'] = np.array(sourupd)
+#------------------------------------------------------------
+if 'phot_upd_sources.dat' in glob.glob('*.dat'):
+	os.system('mv phot_upd_sources.dat phot_upd_sources.dat.bkg')
 uphtbl.write('phot_upd_sources.dat', format='ascii')
+
+
+
+
+
+
+
+
+
+#------------------------------------------------------------
+#	COMBINE ALL TABLES
+#------------------------------------------------------------
+#	INITIAL
+tblist = []
+for tbl in glob.glob('phot*sources*.dat'):
+    tblist.append(ascii.read(tbl))
+comtbl = vstack(tblist)
+comtbl.write('phot_ini_sources_GECKO.dat', format='ascii')
+#	UPDATE
+tblist = []
+for tbl in glob.glob('phot*sources*.dat'):
+	tblist.append(ascii.read(tbl))
+comtbl = vstack(tblist)
+comtbl.write('phot_upd_sources_GECKO.dat', format='ascii')

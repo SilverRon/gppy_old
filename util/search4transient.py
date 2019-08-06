@@ -111,11 +111,13 @@ def secom(inim, gain, pixscale, det_sigma=5, backsize=str(64), backfiltersize=st
 	
 	setbl   = ascii.read(cat)
 	return setbl, cat#, seeing, fwhm_arcsec
-
-
+#-------------------------------------------------------------------------#
 path_and_file='/home/sonic/Research/table/obs.txt'
 gain, pixscale	= which_obs(obs, path_and_file)
 setbl, secat	= secom(inim, gain, pixscale)
+
+
+
 
 elong_med	= np.median(setbl['ELONGATION'])
 ellip_med	= np.median(setbl['ELLIPTICITY'])
@@ -132,28 +134,17 @@ seltbl		= setbl[	(setbl['FLAGS']==0) &
 
 name, ra, dec = seltbl['NUMBER'], seltbl['ALPHA_J2000'], seltbl['DELTA_J2000']
 
+#-------------------------------------------------------------------------#
+setbl = ascii.read('hdCalib-...fits')
+setbl.meta = dict(obs=obs, naxis=fits.getheader(inim)['NAXIS1'])
+setbl['FROM_CENT_IMAGE'] = np.sqrt(
+	(setbl['X_IMAGE']-setbl.meta['naxis']/2)**2+(setbl['Y_IMAGE']-setbl.meta['naxis']/2)**2)
 
 
-
-keywords=['NUMBER',
- 'X_IMAGE',
- 'Y_IMAGE',
- 'ALPHA_J2000',
- 'DELTA_J2000',
- 'MAG_AUTO',
- 'MAGERR_AUTO',
- 'FLUX_AUTO',
- 'FLUXERR_AUTO',
- 'MAG_BEST',
- 'MAGERR_BEST',
- 'FLUX_BEST',
- 'FLUXERR_BEST',
- 'BACKGROUND',
- 'THRESHOLD',
- 'FLAGS',
- 'ELONGATION',
- 'ELLIPTICITY',
- 'CLASS_STAR',
- 'FWHM_IMAGE',
- 'FWHM_WORLD']
-
+seltbl = setbl[	(setbl['ELONGATION'] <= mean_elong) &
+                (setbl['ELLIPTICITY'] <= mean_ellip) &
+                (setbl['CLASS_STAR'] <= mean_cs) &
+                (setbl['FLAGS'] == 0) &
+                (setbl['BACKGROUND'] > 0) &
+                (setbl['FWHM_IMAGE'] > mean_fwhm) &
+                (setbl['FROM_CENT_IMAGE'] < 0.9*setbl.meta['naxis']/2)]

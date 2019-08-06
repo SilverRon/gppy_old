@@ -25,7 +25,7 @@ import ligo.skymap.plot
 from scipy.stats import norm
 import scipy.stats
 #============================================================
-url			= 'https://dcc.ligo.org/public/0146/G1701985/001/bayestar.fits.gz'
+# url			= 'https://dcc.ligo.org/public/0146/G1701985/001/bayestar.fits.gz'
 # filename	= astropy.utils.data.download_file(url)
 filename	= 'S190425z-Update-bayestar.fits.gz'
 hpx, hdr	= hp.read_map(filename, verbose=True, h=True)
@@ -112,5 +112,21 @@ cantbl['Prob']	= cantbl['Prob']/np.sum(cantbl['Prob'])
 cantbl.sort('Prob')
 cantbl.reverse()
 
-subtbl			= cantbl[np.cumsum(cantbl['Prob'])<=0.9]
+for probcut in [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]:
+	subtbl = cantbl[np.cumsum(cantbl['Prob'])<=probcut]
+	# print(len(subtbl))
+	print('PROB.CUT\t{} : {}'.format(probcut, len(subtbl)))
+# subtbl			= cantbl[np.cumsum(cantbl['Prob'])<=0.9]
 # cantbl['']		= cantbl[np.argsort(-1*cantbl['Prob'])]
+
+plt.plot(np.arange(len(cantbl)), np.cumsum(cantbl['Prob']), 'dodgerblue', label='Candidates')
+# plt.scatter(np.arange(len(cnatbl)), np.cumsum(cantbl['Prob']), color='tomato', marker='+')
+for probcut in [0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]:
+	subtbl = cantbl[np.cumsum(cantbl['Prob'])<=probcut]
+	plt.axhline(y=probcut, color='tomato', linestyle='--', label='{}:{}'.format(probcut, len(subtbl)))
+plt.yticks(np.arange(0, 1.1, 0.1), size=20)
+plt.xticks(size=20)
+plt.legend(fontsize=20)
+plt.minorticks_on()
+plt.title('GW170817', size=20)
+plt.tight_layout()
