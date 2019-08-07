@@ -1,19 +1,20 @@
-#!/home/sonic/anaconda3/envs/astroconda/lib python3.7
-# -*- coding: utf-8 -*-
 #============================================================
-#	TNS QUERY CODE
+#	TNS QUERY CODE FOR S190425z WORK
 #	2017.09.14	CREATED BY Nikola Knezevic
 #	2019.08.06	MODIFIED BY Gregory S.H. Paek
+#	2019.08.07	MODIFIED BY Gregory S.H. Paek
 #============================================================
 import os, glob
 import numpy as np
 from astropy.io import ascii, fits
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+from astropy.wcs import WCS
 import requests
 import json
 from collections import OrderedDict
 from astropy.table import Table, vstack, Column, MaskedColumn
+from imsng import phot
 ############################# PARAMETERS #############################
 # API key for Bot                                                    #
 #	GET KEY FROM PERSONAL TABLE
@@ -103,51 +104,9 @@ def get_file(url):                                                   #
 	except Exception as e:                                               #
 		print ('Error message : \n'+str(e))                              #
 ######################################################################
-
 #============================================================#
-#	FUNCTION FOR ROUTINE
+#	FUNCTION
 #============================================================#
-def search_transient_routine(inim, url_tns_sandbox_api="https://sandbox-tns.weizmann.ac.il/api/get"):
-	# obs = inim.split('-')[1]
-	obs = 'KMTNET'
-	hdr = fits.getheader(inim)
-	dateobs = hdr['DATE-OBS']
-	t = Time(dateobs, format='isot')
-	jd = t.jd
-	mjd = t.mjd
-	radeg, dedeg = hdr['CRVAL1'], hdr['CRVAL2']
-	c = SkyCoord(radeg, dedeg, unit='deg')
-	radec = c.to_string('hmsdms', sep=':')
-	ra, dec = radec.split(' ')[0], radec.split(' ')[1]
-	radius = np.asscalar(obstbl[obstbl['obs'] == obs]['fov'])/2   # ['], [arcmin]
-	units = 'arcmin'
-	#------------------------------------------------------------
-	#	SEARCH OBJECT
-	#------------------------------------------------------------
-	search_obj=[("ra",ra), ("dec",dec), ("radius",radius), ("units",units),
-				("objname",""), ("internal_name","")]                    
-	response=search(url_tns_sandbox_api,search_obj)
-	tnames = []
-	if None not in response:
-		json_data =format_to_json(response.text)
-		json_dict = json.loads(json_data)
-		if len(json_dict['data']['reply']) != 0:
-			transients = ''
-			for i in range(len(json_dict['data']['reply'])):
-				tname = json_dict['data']['reply'][i]['prefix']+'_'+json_dict['data']['reply'][i]['objname']
-				tnames.append(tname)
-				transients = transients+tname+','
-			transients = transients[:-1]
-		else:
-			transients = 'None'
-	else:
-		transients = 'None'
-		print(response[1])
-	#------------------------------------------------------------
-	inimtbl = Table(	[[inim], [round(radeg, 5)], [round(dedeg, 3)], [ra], [dec], [dateobs], [round(jd, 5)], [round(mjd, 5)], [transients]],
-					names=('image', 'radeg', 'dedeg', 'ra', 'dec', 'dateobs', 'jd', 'mjd', 'transients'))
-	return inimtbl
-#------------------------------------------------------------
 def query_transient_routine(qname, url_tns_sandbox_api="https://sandbox-tns.weizmann.ac.il/api/get", photometry='1', spectra='1'):
 	get_obj = [("objname", qname), ("photometry", photometry), ("spectra", spectra)]
 	response = get(url_tns_sandbox_api, get_obj)
@@ -176,52 +135,36 @@ def query_transient_routine(qname, url_tns_sandbox_api="https://sandbox-tns.weiz
 		print (response[1])
 		return response[1]
 #============================================================#
-#	MAIN BODY
-#============================================================#
-path_and_file='/home/sonic/Research/table/obs.txt'
-obstbl = ascii.read(path_and_file)
-imlist = glob.glob('a*.fits')
+imtbl = ascii.read('tns.dat')
+indexlist = [] 
+for i in range(len(imtbl)): 
+	trs = imtbl['transients'][i] 
+	if '2019' in trs: 			#	SELECT RECENT ONES
+		print(trs) 
+		indexlist.append(i) 
+seltbl = imtbl[indexlist]		#	SELECTED TABLE
 
-n = 0
-imtblist = []
-for inim in imlist:
-	n += 1
-	print('PROCESS [{}/{}]\t: {}'.format(n, len(imlist), inim))
-	oneimtbl = search_transient_routine(inim)
-	transients = np.asscalar(oneimtbl['transients'])
-	imtblist.append(oneimtbl)
-	trtblist = []
-	if transients != 'None':
-		for transient in transients.split(','):
-			qname = transient.split('_')[1]		#	QUERY NAME
+for i in range(len(seltbl)):
+	inim = seltbl['image'][i]
+	w = WCS(inim)
+	trs = seltbl['transients'][i]
+	tnames, txs, tys = [], [], []
+	for transient in trs.split(','):
+		if '2019' in transient:
+			qname = transient.split('_')[1]
 			onetrtbl = query_transient_routine(qname)
-			trtblist.append(onetrtbl)
-		try:
-			trtbl = vstack(trtblist)
-			trtbl.write('{0}_TNS.dat'.format(inim[:-5]), format='ascii', overwrite=True)
-		except:
-			print('FAIL')
+			tra, tdec = onetrtbl['radeg'][0], onetrtbl['decdeg'][0]		#	FIRST ROW
+			tx, ty = w.wcs_world2pix(tra, tdec, 0)
+			tdateobs = onetrtbl['discoverydate'][0].replace(' ', 'T')
+			ttime = Time(tdateobs, format='isot')
+			tjd, tmjd = ttime.jd, ttime.mjd
+			deljd = seltbl['jd'][i]-tjd
+			if deljd > -3:
+				tnames.append('{}_{}d_{}mag'.format(transient, round(deljd, 3), round(onetrtbl['discoverymag'][0], 3)))
+				txs.append(tx)
+				tys.append(ty)
+			else:
+				pass
+		else:
 			pass
-	else:
-		pass
-
-imtbl = vstack(imtblist)
-imtbl.write('tns.dat', format='ascii', overwrite=True)
-
-
-"""
-# get ascii file (according to the "asciifile" name obtained from the get obj reply)
-ascii_file_url="https://sandbox-tns.weizmann.ac.il/system/files/uploaded/"\
-			   "Padova-Asiago/tns_2017A_2457777.69_Ekar_AFOSC_Padova-Asiago.txt"
-get_file(ascii_file_url)
-
-# get fits file (according to the "fitsfile" name obtained from the get obj reply)
-fits_file_url="https://sandbox-tns.weizmann.ac.il/system/files/uploaded/"\
-			  "Padova-Asiago/tns_2017A_2457777.69_Ekar_AFOSC_Padova-Asiago.fits"
-get_file(fits_file_url)
-
-"""
-
-
-
-
+		phot.plotshow(inim, tnames, txs, tys, outname=inim[:-5]+'_TNS.png')

@@ -92,6 +92,7 @@ def apass_query(name, radeg, dedeg, path, radius=1.0):
 	OUTPUT  :   QUERY TABLE
 				apass-[NAME].cat
 	"""
+	import numpy as np
 	from astroquery.vizier import Vizier 
 	from astropy.coordinates import Angle
 	from astropy.table import Table
@@ -305,7 +306,26 @@ def twomass_query(name, radeg, dedeg, path, band=None, radius=1.0):
 	querytbl.write(path+'/'+outname, format='ascii', overwrite=True)
 	return querytbl
 #-------------------------------------------------------------------------#
-def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=str(3), dual=False, detect='detection.fits', check=False):
+def nomad_query(name, radeg, dedeg, path, radius=1.0):
+	from astroquery.vizier import Vizier
+	import astropy.units as u
+	import astropy.coordinates as coord
+	comment = 'NAME'+'\t'+': '+name+'\n' \
+			+ 'RA'+'\t'+': '+str(round(radeg, 3))+'\n' \
+			+ 'Dec'+'\t'+': '+str(round(dedeg, 3))+'\n' \
+			+ 'Radius'+'\t'+': '+str(radius)+' deg'+'\n'*2 \
+			+ 'LOADING NOMAD Catalog ...'+'\n'
+	print(comment)
+	outname = 'nomad-'+name+'.cat'
+	Vizier.ROW_LIMIT    = -1
+	query   = Vizier.query_region(coord.SkyCoord(ra=radeg, dec=dedeg, \
+								unit=(u.deg, u.deg), frame='icrs'), \
+								width=str(radius*60)+'m', catalog=["I/297/out"])
+	querycat= query[query.keys()[0]]
+	querycat.write(path+'/'+outname, format='ascii', overwrite=True)
+	return querycat
+#-------------------------------------------------------------------------#
+def secom(inim, gain, pixscale, zp=0, seeing=3, det_sigma=3, backsize=str(64), backfiltersize=str(3), psf=False, dual=False, detect='detection.fits', check=False):
 	"""
 	SourceEXtractor
 	APERTURE    3", 5", 7",
@@ -326,10 +346,10 @@ def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=st
 	nnwfile		    = '/home/sonic/Research/yourpy/config/targetphot.nnw'
 	convfile	    = '/home/sonic/Research/yourpy/config/targetphot.conv'
 	try:
-		comment = '\nSourceEXtractor START\n' \
+		comment = 'SourceEXtractor START\n' \
 				+ 'IMAGE\t\t: '+inim+'\n' \
 				+ 'GAIN\t\t: '+str(gain)+'\n' \
-				+ 'PIXSCALE\t\t: '+str(pixscale)+'\n' \
+				+ 'PIXSCALE\t: '+str(pixscale)+'\n' \
 				+ 'DETECTION SIGMA\t: '+str(det_sigma)+'\n' \
 				+ 'PARAM\t\t: '+paramfile+'\n' \
 				+ 'BACKSIZE\t: '+backsize+'\n' \
@@ -346,7 +366,7 @@ def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=st
 	seg     = inim[:-5]+'.seg.fits'
 	bkg     = inim[:-5]+'.bkg.fits'
 	sub     = inim[:-5]+'.sub.fits'
-	psf     = inim[:-5]+'.psf'
+	impsf   = inim[:-5]+'.psf'
 	aper    = inim[:-5]+'.aper.fits'
 
 	#   BASIC INFO.
@@ -354,37 +374,38 @@ def secom(inim, gain, pixscale, det_sigma=3, backsize=str(64), backfiltersize=st
 	det_thresh      = det_sigma/np.sqrt(det_area)
 	detecminarea    = str(det_area)
 	detectthresh    = str(det_thresh)
-	seeing, fwhm_arcsec = psfex(inim, pixscale)
-	#pixscale        = pixscalecalc(inim)
 	#   OPTION
 	aperture        = '%.2f'%(3./pixscale)+','+'%.2f'%(5./pixscale)+','+'%.2f'%(7./pixscale)+','+'%.2f'%(seeing)+','+'%.2f'%(1.2*seeing)+','+'%.2f'%(1.5*seeing)+','+'%.2f'%(1.7*seeing)+','+'%.2f'%(2.0*seeing)
-
+	option0	= ' -MAG_ZEROPOINT {} '.format(zp)
 	option1 = ' -CATALOG_NAME '+cat+' -PARAMETERS_NAME '+paramfile
 	option2 = ' -DETECT_MINAREA '+detecminarea+' -DETECT_THRESH '+detectthresh \
 			+' -FILTER Y '+'-FILTER_NAME '+convfile
 	option3 = ' -PHOT_APERTURES '+aperture \
 			+' -GAIN '+'%.1f'%(gain)+' -PIXEL_SCALE '+'%.1f'%(pixscale)
 	#option4 = ' -SEEING_FWHM '+'%.3f'%(seeing)+' -STARNNW_NAME '+nnwfile
-	option4 = ' -SEEING_FWHM '+'%.3f'%(fwhm_arcsec)+' -STARNNW_NAME '+nnwfile
+	option4 = ' -SEEING_FWHM '+'%.3f'%(seeing)+' -STARNNW_NAME '+nnwfile
 	option5 = ' -BACK_SIZE '+ backsize \
 			+ ' -BACK_FILTERSIZE '+ backfiltersize+' -BACKPHOTO_TYPE LOCAL'
 	option6 = ' -CHECKIMAGE_TYPE SEGMENTATION,APERTURES,BACKGROUND,-BACKGROUND'
 	option7 = ' -CHECKIMAGE_NAME '+seg+','+aper+','+','+bkg+','+sub
-	option8 = ' -PSF_NAME '+psf
+	if psf	!= False:
+		option8 = ' -PSF_NAME '+impsf
+	else:
+		option8 = ''
 	#   COMMAND
 	#   detect = detection.fits is fine image show target significantly and have good seeing and many stars i
-	dualcom ='sex -c '+configfile+' '+detect+' , '+inim+' -CATALOG_NAME dual'+cat+' -PARAMETERS_NAME '+paramfile+ ' '+option2+' '+option3+' '+option4+' '+option5+' '+option6+' '+option7+' '+option8
-	sglcom  ='sex -c '+configfile+' '+inim+' '+option1+' '+option2+' '+option3+' '+option4+' '+option5+' '+option6+' '+option7+' '+option8
-	clearcom='sex -c '+configfile+' '+inim+' '+option1+' '+option2+' '+option3+' '+option4+' '+option5+' '+option8
+	dualcom ='sex -c '+configfile+' '+detect+' , '+inim+' -CATALOG_NAME dual'+cat+' -PARAMETERS_NAME '+paramfile+ ' '+option0+' '+option2+' '+option3+' '+option4+' '+option5+' '+option6+' '+option7+' '+option8
+	sglcom  ='sex -c '+configfile+' '+inim+' '+option0+' '+option1+' '+option2+' '+option3+' '+option4+' '+option5+' '+option6+' '+option7+' '+option8
+	clearcom='sex -c '+configfile+' '+inim+' '+option0+' '+option1+' '+option2+' '+option3+' '+option4+' '+option5+' '+option8
 	if dual == False    :
 		if check == False:
 			os.system(clearcom)
 		else:
 			os.system(sglcom)
 	else                : os.system(dualcom)
-	
+		
 	secat   = ascii.read(cat)
-	return secat, cat, seeing, fwhm_arcsec
+	return secat, cat
 #-------------------------------------------------------------------------#
 def psfex(inim, pixscale):
 	"""
@@ -715,7 +736,8 @@ def psfexxml(xmlfile):
 	fwhm        = round(fwhm, 3)
 	return fwhm
 #-------------------------------------------------------------------------#
-def matching(incat, refcat, sep=2.0):
+#def matching(incat, refcat, sep=2.0):
+def matching(intbl, reftbl, inra, indec, refra, refdec, sep=2.0):
 	"""
 	MATCHING TWO CATALOG WITH RA, Dec COORD. WITH python
 	INPUT   :   SE catalog, SDSS catalog file name, sepertation [arcsec]
@@ -726,37 +748,25 @@ def matching(incat, refcat, sep=2.0):
 	from astropy.table import Table, Column
 	from astropy.coordinates import SkyCoord
 	from astropy.io import ascii
-	
-	mergename   = incat[:-4]+'.merge.cat'
-	if type(incat) == str: intbl       = ascii.read(incat)
-	else: intbl	= incat
-	if type(refcat) == str: reftbl      = ascii.read(refcat)
-	else: reftbl = refcat
-	coo_intbl   = SkyCoord(intbl['ALPHA_J2000'], intbl['DELTA_J2000'], unit=(u.deg, u.deg))
-	coo_reftbl  = SkyCoord(reftbl['ra'], reftbl['dec'], unit=(u.deg, u.deg))
+
+	incoord		= SkyCoord(inra, indec, unit=(u.deg, u.deg))
+	refcoord	= SkyCoord(refra, refdec, unit=(u.deg, u.deg))
 
 	#   INDEX FOR REF.TABLE
-	indx, d2d, d3d  = coo_intbl.match_to_catalog_sky(coo_reftbl)
-	ref_match       = reftbl[indx]
-	ref_match['sep']= d2d
-	ref_match_col   = ref_match.colnames
-
-	merge_tbl       = intbl
-
-	for col in ref_match.colnames:
-		merge_tbl[col]  = ref_match[col]
-
-	indx_cut        = np.where(merge_tbl['sep']*3600. < sep)
-	merge           = merge_tbl[indx_cut]
-
-	merge.write(mergename, format='ascii', overwrite=True)
-	comment         = mergename+' is generagted.'
-	print(comment)
-	return  merge
+	indx, d2d, d3d  = incoord.match_to_catalog_sky(refcoord)
+	mreftbl			= reftbl[indx]
+	mreftbl['sep']	= d2d
+	mergetbl		= intbl
+	for col in mreftbl.colnames:
+		mergetbl[col]	= mreftbl[col]
+	indx_sep		= np.where(mergetbl['sep']*3600.<sep)
+	mtbl			= mergetbl[indx_sep]
+	#mtbl.write(mergename, format='ascii', overwrite=True)
+	return mtbl
 #-------------------------------------------------------------------------#
 def star4zp(intbl, inmagerkey, refmagkey, refmagerkey, 
 			refmaglower=14., refmagupper=17., refmagerupper=0.05,
-			inmagerupper=0.1, class_star_cut=0.5):
+			inmagerupper=0.1):
 	"""
 	SELECT STARS FOR USING ZEROPOINT CALCULATION
 	INPUT   :   TABLE, IMAGE MAG.ERR KEYWORD, REF.MAG. KEYWORD, REF.MAG.ERR KEYWORD
@@ -764,26 +774,23 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 	"""
 	import numpy as np
 	indx    = np.where( (intbl['FLAGS'] == 0) & 
-						(intbl['CLASS_STAR'] >= class_star_cut) & 
 						(intbl[refmagkey] < refmagupper) & 
 						(intbl[refmagkey] > refmaglower) & 
 						(intbl[refmagerkey] < refmagerupper) &
 						(intbl[inmagerkey] < inmagerupper) 
 						)
 	indx0   = np.where( (intbl['FLAGS'] == 0) )
-	indx1   = np.where( (intbl['CLASS_STAR'] >= class_star_cut) )
 	indx2   = np.where( (intbl[refmagkey] < refmagupper) & 
 						(intbl[refmagkey] > refmaglower) & 
 						(intbl[refmagerkey] < refmagerupper) 
 						)
 	indx3   = np.where( (intbl[inmagerkey] < inmagerupper) )
 	newtbl  = intbl[indx]
-	comment = '='*60+'\n' \
+	comment = '-'*60+'\n' \
 			+ 'ALL\t\t\t\t: '+str(len(intbl))+'\n' \
 			+ '-'*60+'\n' \
 			+ 'FLAG(=0)\t\t\t: '+str(len(indx0[0]))+'\n' \
-			+ 'CLASS_STAR > '+str(class_star_cut)+'\t\t: '+str(len(indx1[0]))+'\n' \
-			+ refmagkey+' REF. MAGCUT ('+str(refmaglower)+'-'+str(refmagupper)+')'+'\t: '+str(len(indx2[0]))+'\n' \
+			+ refmagkey+' REF. MAGCUT ('+str(refmaglower)+'-'+str(refmagupper)+')'+'\t\t: '+str(len(indx2[0]))+'\n' \
 			+ refmagerkey+' REF. MAGERR CUT < '+str(refmagerupper)+'\n' \
 			+ inmagerkey+' OF IMAGE CUT < '+str(inmagerupper)+'\t: '+str(len(indx3[0]))+'\n' \
 			+ '-'*60+'\n' \
@@ -805,7 +812,7 @@ def zpcal(intbl, inmagkey, inmagerkey, refmagkey, refmagerkey, sigma=2.0):
 	#	REMOVE BLANK ROW (=99)	
 	indx_avail      = np.where( (intbl[inmagkey] != 99) & (intbl[refmagkey] != 99) )
 	intbl           = intbl[indx_avail]
-	zplist          = intbl[refmagkey] - intbl[inmagkey]
+	zplist          = np.copy(intbl[refmagkey] - intbl[inmagkey])
 	intbl['zp']		= zplist
 	#	SIGMA CLIPPING
 	zplist_clip     = sigma_clip(zplist, sigma=sigma, maxiters=None, cenfunc=median, copy=False)
@@ -815,71 +822,46 @@ def zpcal(intbl, inmagkey, inmagerkey, refmagkey, refmagerkey, sigma=2.0):
 	intbl_alive     = intbl[indx_alive]
 	intbl_exile     = intbl[indx_exile]
 	#	ZP & ZP ERR. CALC.
-	zp              = np.median(intbl_alive['zp'])
-	zper			= np.std(intbl_alive['zp'])
+	zp              = np.median(np.copy(intbl_alive['zp']))
+	zper			= np.std(np.copy(intbl_alive['zp']))
 	return zp, zper, intbl_alive, intbl_exile
 #-------------------------------------------------------------------------#
-def zp_plot(inim, inmagkey, zp, zper, instmag0, refmag0, zplist0, instmag1, refmag1, zplist1):
-	"""
-	ZERO POINT PLOT
-	INPUT   :	IMAGE, APERTURE KEY, ZP, ZP ERR,
-				INST. MAG(NOT CLIPPED), REF. MAG(NOT CLIPPED), ZP LIST(NOT CLIPPED),
-				INST. MAG(CLIPPED), REF. MAG(CLIPPED), ZP LIST(CLIPPED),
-	OUTPUT  :
-	"""
+def zpplot(outname, otbl, xtbl, inmagkey, inmagerkey, refmagkey, refmagerkey, zp, zper):
 	import numpy as np
 	import matplotlib.pyplot as plt
 	#   FILE NAME
-	outname = inim[:-5]+'.'+inmagkey
-	#	POINT
-	plt.scatter( refmag0, zplist0, color='dodgerblue', s=15, marker='o', linewidth=1, alpha=0.5, label='NOT CLIPPED ('+str(len(refmag0))+')' )
-	plt.scatter( refmag1, zplist1, color='tomato', s=30, marker='x', linewidth=1, alpha=0.5, label='CLIPPED ('+str(len(refmag1))+')' )
-	#	LINE
-	plt.axhline(zp, linewidth=1, linestyle='--', color='gray', label=str(round(zp, 3)) )
-	plt.axhline(zp+zper, linewidth=1, linestyle='-', color='gray', alpha=0.5, label=str(round(zper, 3)) )
+	plt.close('all')
+	plt.figure(figsize=(12, 9))
+	plt.rcParams.update({'font.size': 16})
+	plt.axhline(zp, linewidth=1, linestyle='--', color='gray', label= 'ZP {}'.format(str(round(zp, 3))) )
+	plt.axhline(zp+zper, linewidth=1, linestyle='-', color='gray', alpha=0.5, label='ZPER {}'.format(str(round(zper, 3))) )
 	plt.axhline(zp-zper, linewidth=1, linestyle='-', color='gray', alpha=0.5 )#, label=str(round(zp, 3)) )
-	plt.fill_between([np.min(refmag0)-0.05, np.max(refmag0)+0.05], zp-zper, zp+zper, color='silver', alpha=0.3)
-	#	RANGE
-	plt.xlim(np.min(refmag0)-0.05, np.max(refmag0)+0.05)
+	plt.fill_between(	[np.min(otbl[refmagkey])-0.05, np.max(otbl[refmagkey])+0.05],
+						zp-zper, zp+zper,
+						color='silver', alpha=0.3)
+	plt.errorbar(	otbl[refmagkey], otbl['zp'],
+					yerr=sqsum(otbl[inmagerkey], otbl[refmagerkey]),
+					c='dodgerblue', ms=6, marker='o', ls='',
+					capsize=5, capthick=1,
+					label='NOT CLIPPED ({})'.format(len(otbl)), alpha=0.75)
+	plt.scatter( xtbl[refmagkey], xtbl['zp'], color='tomato', s=50, marker='x', linewidth=1, alpha=1.0, label='CLIPPED ({})'.format(len(xtbl)) )
+	plt.xlim(np.min(otbl[refmagkey])-0.05, np.max(otbl[refmagkey])+0.05)
 	plt.ylim(zp-0.5, zp+0.5)
 	#	SETTING
 	plt.title(outname, {'fontsize': 10})
 	plt.gca().invert_yaxis()
 	plt.xlabel('REF.MAG.', {'color': 'black', 'fontsize': 20})
 	plt.ylabel('ZERO POINT [AB]', {'color': 'black', 'fontsize': 20})
-	plt.legend(loc='best', prop={'size': 11})
+	plt.legend(loc='best', prop={'size': 14}, edgecolor=None)
 	plt.tight_layout()
-	plt.savefig(outname+'.zpcal.png', dpi = 500)
-	plt.close()
-	'''
-	magdif0		= (refmag0) - (instmag0+zp)
-	magdif1		= (refmag1) - (instmag1+zp)
-	#	POINT
-	plt.scatter( refmag0, magdif0, color='dodgerblue', s=15, marker='o', linewidth=1, alpha=0.5, label='NOT CLIPPED' )
-	plt.scatter( refmag1, magdif1, color='tomato', s=30, marker='x', linewidth=1, alpha=0.5, label='CLIPPED' )
-	#	LINE
-	plt.axhline(0, linewidth=1, linestyle='--', color='gray', label=str(round(zp, 3)) )
-	plt.axhline(zper, linewidth=1, linestyle='-', color='gray', alpha=0.5, label=str(round(zper, 3)) )
-	plt.axhline(-zper, linewidth=1, linestyle='-', color='gray', alpha=0.5)#, label=str(round(zper, 3)) )
-	plt.fill_between([np.min(refmag0)-0.05, np.max(refmag0)+0.05], -zper, +zper, color='silver', alpha=0.3)
-	#	RANGE
-	plt.xlim(np.min(refmag0)-0.05, np.max(refmag0)+0.05)
-	plt.ylim(-0.5, +0.5)
-	#	SETTING
-	plt.title(outname, {'fontsize': 10})
-	plt.xlabel('REF.MAG.', {'color': 'black', 'fontsize': 20})
-	plt.ylabel('REAL MAG.-(ZP+INST.MAG) [AB]', {'color': 'black', 'fontsize': 10})
-	plt.legend(loc='best', prop={'size': 11})
-	plt.tight_layout()
-	plt.savefig(outname+'.zpcal_test.png', dpi = 500)
-	plt.close()
-	'''
+	plt.minorticks_on()
+	plt.savefig(outname)
 	#	PRINT
-	print('MAG TYP\t\t: '+inmagkey)
-	print('ZP\t\t: '+str(round(zp, 3)))
-	print('ZP ERR\t\t: '+str(round(zper, 3)))
-	print('STD.NUMB\t: '+str(int(len(zplist0))))
-	print('REJ.NUMB\t: '+str(int(len(zplist1))))
+	print('MAG TYP     : '+inmagkey)
+	print('ZP          : '+str(round(zp, 3)))
+	print('ZP ERR      : '+str(round(zper, 3)))
+	print('STD.NUMB    : '+str(int(len(otbl))))
+	print('REJ.NUMB    : '+str(int(len(xtbl))))
 #-------------------------------------------------------------------------#
 def bkgest_mask(inim):
 	'''
@@ -916,15 +898,15 @@ def sqsum(a, b):
 	import numpy as np
 	return np.sqrt(a**2.+b**2.)
 #-------------------------------------------------------------------------#
+'''
 def targetfind(ra1, de1, ra2, de2, sep):
-	'''
-	FIND TARGET
-	'''
+
 	import numpy as np
 	dist	= np.sqrt( (ra1-ra2)**2. + (de1-de2)**2. )
 	indx	= np.where( (dist == np.min(dist)) &
 						(dist < sep/3600.) )
 	return indx
+'''
 #-------------------------------------------------------------------------#
 def plotshow(inim, numb_list, xim_list, yim_list, add=None, numb_addlist=None, xim_addlist=None, yim_addlist=None):
 	'''
@@ -977,7 +959,6 @@ def plotshow(inim, numb_list, xim_list, yim_list, add=None, numb_addlist=None, x
 		orientation='portrait', papertype=None, format=None,
 		transparent=False, bbox_inches=None, pad_inches=0.1,
 		frameon=None, metadata=None)
-	comment		= outname+'\tis generated.';print(comment)
 	plt.close()
 #-------------------------------------------------------------------------#
 def sedualcom(inim, gain, pixscale, det_sigma=1.5, backsize=str(64), backfiltersize=str(3), detect='detection.fits'):
@@ -1061,3 +1042,14 @@ def sedualcom(inim, gain, pixscale, det_sigma=1.5, backsize=str(64), backfilters
 	os.system(dualcom)
 	secat   = ascii.read(cat)
 	return secat, cat, seeing, fwhm_arcsec
+#-------------------------------------------------------------------------#
+def targetfind(tra, tdec, refra, refdec, sep):
+	import astropy.units as u
+	from astropy.coordinates import SkyCoord
+	targ_coord	= SkyCoord(tra, tdec, unit=(u.deg, u.deg))
+	phot_coord	= SkyCoord(refra, refdec, unit=(u.deg, u.deg))
+	indx, d2d, d3d	= targ_coord.match_to_catalog_sky(phot_coord)
+	if d2d.arcsec < sep:
+		return indx
+	else:
+		return None
