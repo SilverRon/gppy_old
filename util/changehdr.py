@@ -10,7 +10,7 @@ import os,glob
 def changehdr(inim, where, what):
 	data, hdr = fits.getdata(inim, header = True)
 	hdr[where] = what
-	fits.writeto(inim, data, hdr, clobber=True)
+	fits.writeto(inim, data, hdr, overwrite=True)
 #------------------------------------------------------------
 # SQUEAN DATE-OBS CORRECTION
 sample_applications='''

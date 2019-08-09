@@ -1,9 +1,8 @@
 #============================================================
-#   1. FILE CHECK, whether new folder was updated.
-#   2. pre-processing + log file
-#   3. moving
-#   4. combine and subtraction (not yet)
-#   18.12.04 add something by G.Paek
+#   CALIBTRATION ROUTINE FOR IMSNG TELESCOPES
+#	LOAO, DOAO, SOAO, ...
+#   18.12.04	UPDATED BY Gregory S.H. Paek
+#	19.08.08	UPDATED BY Gregory S.H. Paek	
 #============================================================
 import os, sys, glob
 import numpy as np
@@ -121,6 +120,7 @@ C5		'DATE-OBS'+'T'+'UT'			30inch
 
 ###     DIRECTORY TO PROCESS
 def call_images(path_folder):
+	from msumastro import ImageFileCollection
 	images          = ImageFileCollection(path_folder, keywords='*')
 	return images
 ###     OBSERVATORY

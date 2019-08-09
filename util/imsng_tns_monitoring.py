@@ -165,7 +165,7 @@ def query_transient_routine_simple(qname, field, c, url_tns_sandbox_api="https:/
 		#------------------------------------------------------------		
 		tc = SkyCoord(json_dict_targ['data']['reply']['ra'],
 		json_dict_targ['data']['reply']['dec'], unit=(u.hourangle, u.deg))
-		for key in ['objname', 'discoverydate', 'discoverymag', 'discmagfilter', 'internal_name', 'ra', 'radeg', 'dec', 'decdeg', 'object_type']:
+		for key in ['objname', 'hostname', 'discoverydate','discoverymag', 'discmagfilter', 'internal_name', 'ra', 'radeg', 'dec', 'decdeg', 'object_type']:
 			if key == 'discmagfilter':
 				val = json_dict_targ['data']['reply'][key]['name']
 			elif key == 'object_type':
@@ -212,6 +212,7 @@ for i in range(206265):
 	#------------------------------------------------------------
 	cols = ('field',
 			'objname',
+			'hostname',
 			'discoverydate',
 			'discoverymag',
 			'discmagfilter',
@@ -273,8 +274,10 @@ for i in range(206265):
 		#	SAVE TABLEs
 		#------------------------------------------------------------
 		comtbl.write(path_save+'/'+outname, format='ascii', overwrite=True)
+		# ascii.write(comtbl, path_save+'/'+outname, format='fixed_width_two_line')
 		newtbl = vstack(newlist)
-		newtbl.write(path_save+'/NEW-'+outname, format='ascii', overwrite=True)
+		# newtbl.write(path_save+'/NEW-'+outname, format='ascii', overwrite=True)
+		ascii.write(newtbl, path_save+'/NEW-'+outname, format='fixed_width_two_line')
 		#------------------------------------------------------------
 		#	MAIL SETTING
 		#------------------------------------------------------------
@@ -288,7 +291,7 @@ for i in range(206265):
 		toIDs	= ''
 		for address in reciver['address']: toIDs += address+','
 		toIDs	= toIDs[:-1]
-		#toIDs	= "gregorypaek94@gmail.com"
+		# toIDs	= "gregorypaek94@gmail.com"
 		# ccIDs	= 'gundam_psh@naver.com'
 		import glob
 		# path	= glob.glob(save_path+'/'+eventname+'-*.txt')
@@ -343,4 +346,4 @@ for i in range(206265):
 
 	deltime	= time.time() - starttime
 	print('\nDone.\t\t[{0} sec]'.format(round(deltime, 1)))
-	time.sleep(3600)
+	time.sleep(10800)
