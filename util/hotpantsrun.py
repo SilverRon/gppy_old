@@ -13,6 +13,8 @@ import astropy.units as u
 from multiprocessing import Process, Pool
 import multiprocessing as mp
 import time
+import alipy
+
 #============================================================
 def hotpants(imlist, refim):
     if type(imlist) != list: imlist = [imlist]

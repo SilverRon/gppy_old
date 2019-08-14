@@ -108,7 +108,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=10,
-						refmagupper=17,
+						refmagupper=19,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -212,7 +212,9 @@ path_refcat	= '/home/sonic/Research/cat/refcat'
 #------------------------------------------------------------
 obstbl		= ascii.read(path_obs+'/obs.txt')
 #	TARGET COORD.	[deg]
-tra, tdec	= 185.733875, 15.826			#	SN2019ehk
+# tra, tdec = 185.733875, 15.826			#	SN2019ehk
+# tra, tdec = 258.3414923, -9.964393723	#	ZTF19aarykkb
+tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
 #------------------------------------------------------------
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
@@ -239,7 +241,7 @@ for inim in imlist:
 							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
 							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
-		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
+		os.system('rm psf*.fits snap*.fits *.xml seg.fits')
 	except:
 		pass
 #------------------------------------------------------------
