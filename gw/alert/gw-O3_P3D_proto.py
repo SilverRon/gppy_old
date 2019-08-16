@@ -11,11 +11,10 @@ import gcn.handlers
 import gcn.notice_types
 import healpy as hp
 import numpy as np
+import os, glob
 #------------------------------------------------------------
 import astropy.utils.data
 from matplotlib import pyplot as plt
-import numpy as np
-import healpy as hp
 #------------------------------------------------------------
 #	FOR THE GALAXY CROSS MATCHING
 from astropy.table import Table, vstack, hstack, Column
@@ -25,9 +24,12 @@ import ligo.skymap.plot
 from scipy.stats import norm
 import scipy.stats
 #============================================================
+os.system('ls *.fits.gz')
 # url			= 'https://dcc.ligo.org/public/0146/G1701985/001/bayestar.fits.gz'
 # filename	= astropy.utils.data.download_file(url)
-filename	= 'S190425z-Update-bayestar.fits.gz'
+# filename	= 'S190425z-Update-bayestar.fits.gz'
+# filename = 'S190814bv-Update-bayestar.fits.gz'
+filename = input('bayestar file\t: ')
 hpx, hdr	= hp.read_map(filename, verbose=True, h=True)
 hdr			= dict(hdr)
 prob, distmu, distsigma, distnorm = hp.read_map(filename,
