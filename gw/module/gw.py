@@ -1,15 +1,26 @@
-#    SELECT GW HOST GALAXY CANDIDATES
-#   MADE BY Gregory S.H. Paek   (2019.02.10)
+#   SELECT GW HOST GALAXY CANDIDATES
+#	2019.02.10	MADE BY Gregory S.H. Paek
+#	2019.08.29	UPDATED BY Gregory S.H. Paek
 #============================================================#
 import os, glob, sys
 import matplotlib.pyplot as plt
 import numpy as np
 import healpy as hp
-from astropy.table import Table, Column, MaskedColumn
+from astropy.table import Table, vstack, hstack, Column
 from astropy.io import ascii
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from scipy import special
+import time
+from astropy.table import Table, Column, MaskedColumn, vstack
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from imsng import tool
+from ligo.skymap.postprocess import find_greedy_credible_levels
+import astropy.utils.data
+import ligo.skymap.plot
+from scipy.stats import norm
+import scipy.stats
 #============================================================#
 #    FUNCTION
 #------------------------------------------------------------#
@@ -476,7 +487,135 @@ def kilonova_mag(gwdist, gwdiststd):
 	merr	= np.sqrt( (m0err)**2 + ((5.*gwdiststd)/(gwdist*np.log(10)))**2 + ((5.*dist0err)/(dist0*np.log(10)))**2 )
 	return m, merr
 #------------------------------------------------------------
-	
-	
-	
-	
+def expectedLC(eventname, hdr, save_path):
+	import os, glob
+	import numpy as np
+	from astropy.io import ascii
+	from astropy.table import Table, vstack
+	import matplotlib.pyplot as plt
+	from astropy.time import Time
+	from imsng import tool, gw
+	path_base	= '/home/gw/Research'
+	t0			= Time(hdr['DATE-OBS'], format='isot', scale='utc')
+	jd0_170817	= 2457983.02852
+	droutbl		= ascii.read(path_base+'/phot_gw170817_Drout.dat')
+	pirotbl		= ascii.read(path_base+'/cocoon_Piro+18.dat')
+	#------------------------------------------------------------
+	#	COCOON MODEL
+	prtbl		= pirotbl[pirotbl['filter']=='r']
+	prtbl['mag'], prtbl['magerr']	=	tool.abs2app(prtbl['absmag'], 0, hdr['DISTMEAN']*1e6, hdr['DISTSTD']*1e6)
+	prtbl['mag']= prtbl['mag']-0.7
+	#	GW170817-like
+	rtbl		= droutbl[droutbl['filter']=='r']; rtbl['delmjd'].sort()
+	rmag, rmagerr= tool.calc_app(rtbl['mag'], rtbl['magerr'], 38.4, 8.9, hdr['DISTMEAN'], hdr['DISTSTD'])
+	#------------------------------------------------------------
+	#	PLOT 1	: TIME - MAG.	(r-band)
+	#------------------------------------------------------------
+	plt.close('all')
+	plt.rcParams.update({'font.size': 16})
+	fig, ax0	= plt.subplots(nrows=1, ncols=1, sharey=False, figsize=(9, 9))
+	#------------------------------------------------------------
+	#	GW170817-like
+	ax0.plot(rtbl['delmjd'], rmag, color='red', alpha=0.5, label='GW170817-like')
+	ax0.fill_between(rtbl['delmjd'], rmag-rmagerr, rmag+rmagerr, color='tomato', alpha=0.15, label='_nolegend_')
+	#	COCOON MODEL (Piro+2018)
+	ax0.plot(prtbl['delmjd'], prtbl['mag'], color='dodgerblue', alpha=0.5, label='Shock Cooling')
+	ax0.fill_between(prtbl['delmjd'], prtbl['mag']-prtbl['magerr'], prtbl['mag']+prtbl['magerr'], color='dodgerblue', alpha=0.3, label='_nolegend_')
+	#------------------------------------------------------------
+	#	SETTING
+	#------------------------------------------------------------
+	ax0.set(xlabel='Time (Days from merger)', ylabel=r'Magnitude')
+	ax0.set_ylim([int(np.max(rmag))+0.5, int(np.min(prtbl['mag']))-0.5])
+	ax0.set_xlim([0,2])
+	plt.axvline(x=0.48, color='grey', linewidth=2, linestyle='--', label='GW170817 EM discovery')
+	ax0.legend(loc='upper right', prop={'size':20})
+	plt.title('{0} r-band'.format(eventname))
+	plt.tight_layout()
+	plt.minorticks_on()
+	plt.savefig('{0}/{1}_LC_rband.png'.format(save_path, eventname), overwrite=True)
+
+#------------------------------------------------------------
+def read3Dhealpix2candidates(path_healpix, path_catalog, eventname='GW_signal', conflist=[0.5, 0.9], distsigcut=3, header=True):
+	hpx, hdr	= hp.read_map(path_healpix, verbose=True, h=True)
+	hdr			= dict(hdr)
+	prob, distmu, distsigma, distnorm = hp.read_map(path_healpix,
+													field=range(4),
+													dtype=('f8', 'f8', 'f8', 'f8'))
+	npix		= len(prob)
+	nside		= hp.npix2nside(npix)
+	pixarea		= hp.nside2pixarea(nside)		
+	pixarea_deg2= hp.nside2pixarea(nside, degrees=True)
+	#------------------------------------------------------------
+	gldtbl0		= Table.read(path_catalog, format='ascii')
+	gldtbl		= gldtbl0[	(gldtbl0['dist']<=hdr['DISTMEAN']+distsigcut*hdr['DISTSTD'])&
+							(gldtbl0['dist']>=hdr['DISTMEAN']-distsigcut*hdr['DISTSTD'])]
+	gldcoord	= SkyCoord(ra=gldtbl['ra']*u.deg, dec=gldtbl['dec']*u.deg)
+	#	VOID COLUMN IN CATALOG TABLE
+	ngld		= np.size(gldtbl)
+	probdencol	= Column(np.zeros(ngld, dtype='f4'), name='dP_dV')
+	probcol		= Column(np.zeros(ngld, dtype='f4'), name='P')
+	probdenAcol	= Column(np.zeros(ngld, dtype='f4'), name='dP_dA')
+	probAcol	= Column(np.zeros(ngld, dtype='f4'), name='P_A')
+	gldtbl.add_columns([probdencol, probcol, probdenAcol, probAcol])
+	#------------------------------------------------------------
+	#	CALC hp INDEX FOR EACH GALAXY
+	theta	= 0.5 * np.pi - gldcoord.dec.to('rad').value
+	phi		= gldcoord.ra.to('rad').value
+	ipix	= hp.ang2pix(nside, theta, phi)
+	cumP2D	= np.cumsum(prob[np.argsort(-1*prob)])[ipix]
+	#	CALC. PROBABILITY (P_2D)
+	dp_dA		= prob[ipix]/pixarea
+	dp_dA_deg2	= prob[ipix]/pixarea_deg2
+	#	CALC. PROBABILITY DENSITY PER VOLUME (P_3D)
+	dp_dV	= prob[ipix] * distnorm[ipix] * norm(distmu[ipix],distsigma[ipix]).pdf(gldtbl['dist'])/pixarea 
+	gldtbl['dP_dV']	= dp_dV
+	gldtbl['dP_dA']	= dp_dA
+	#------------------------------------------------------------
+	#	CALC. SCORE BASED ON POSITION AND P_3D
+	#------------------------------------------------------------
+	gldtbl['Prob']	= gldtbl['dist']**2 * 10**(-0.4*gldtbl['K']) * gldtbl['dP_dV']
+	#------------------------------------------------------------
+	cantbl			= gldtbl[	(gldtbl['K']!=-99.0)&
+								(gldtbl['dist']!=-99.0)&
+								(gldtbl['Prob']!=0.0)]
+	cantbl['Prob']	= cantbl['Prob']/np.sum(cantbl['Prob'])
+	cantbl.sort('Prob')
+	cantbl.reverse()
+	cantbl.meta['event'] = eventname
+	cantbl.meta['distcut'] = distsigcut
+	cantbl.meta['path_healpix'] = path_healpix
+	cantbl.meta['path_catalog'] = path_catalog
+	#------------------------------------------------------------
+	confareainfo = dict()
+	credible_levels = find_greedy_credible_levels(prob)
+	'''
+	for conf in conflist:
+		areainconf = np.sum(credible_levels <= conf) * hp.nside2pixarea(nside, degrees=True)
+		confareainfo[str(conf)] = areainconf	
+	'''
+	if header == True:
+		# return cantbl, prob, confareainfo, hdr
+		return cantbl, prob, hdr
+	else:
+		# return cantbl, prob, confareainfo
+		return cantbl, prob
+#------------------------------------------------------------
+def plotcumscore(cantbl, probcutlist=[0.5, 0.90, 0.95, 0.99], eventname='GW_signal', path_save='.'):
+	plt.close('all')
+	plt.plot(np.arange(len(cantbl)), np.cumsum(cantbl['Prob']), 'dodgerblue', label='All({})'.format(len(cantbl)))
+	# plt.scatter(np.arange(len(cnatbl)), np.cumsum(cantbl['Prob']), color='tomato', marker='+')
+	# for probcut in [0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]:
+	for probcut in probcutlist:
+		subtbl = cantbl[np.cumsum(cantbl['Prob'])<=probcut]
+		print('PROB.CUT\t{} : {}'.format(probcut, len(subtbl)))
+		plt.axhline(y=probcut, color='tomato', alpha=0.5, linestyle='--', label='{}({})'.format(probcut, len(subtbl)))
+	plt.xlim([-5, 2*len(subtbl)])
+	plt.xlabel('Cumulative Score', fontsize=15)
+	plt.ylabel('Number of objects', fontsize=15)
+	plt.xticks(size=15)
+	plt.yticks(np.arange(0, 1.1, 0.1), size=15)
+	plt.legend(fontsize=15, loc='lower right')
+	plt.minorticks_on()
+	plt.title(eventname, size=20)
+	plt.tight_layout()
+	plt.savefig(path_save+'/'+eventname+'-cumscore.png', overwrite=True)

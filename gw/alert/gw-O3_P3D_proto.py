@@ -47,8 +47,9 @@ pixarea		= hp.nside2pixarea(nside)
 pixarea_deg2= hp.nside2pixarea(nside, degrees=True)
 #------------------------------------------------------------
 path_cat	= '/home/sonic/Research/cat/GLADE2.3/GLADE_2.3+2MASS_PSC+identi_name.dat'
+print('READ GLADE CATALOG')
 gldtbl0		= Table.read(path_cat, format='ascii')
-n=1
+n=2
 gldtbl		= gldtbl0[	(gldtbl0['dist']<=hdr['DISTMEAN']+n*hdr['DISTSTD'])&
 						(gldtbl0['dist']>=hdr['DISTMEAN']-n*hdr['DISTSTD'])]
 gldcoord	= SkyCoord(ra=gldtbl['ra']*u.deg, dec=gldtbl['dec']*u.deg)
@@ -130,5 +131,5 @@ plt.yticks(np.arange(0, 1.1, 0.1), size=20)
 plt.xticks(size=20)
 plt.legend(fontsize=20)
 plt.minorticks_on()
-plt.title('GW170817', size=20)
+plt.title('S190822c', size=20)
 plt.tight_layout()

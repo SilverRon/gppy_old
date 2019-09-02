@@ -10,18 +10,23 @@ import glob
 from scipy.integrate import simps
 from speclite import filters
 
-z=0
-z=sys.argv[1]
-path = "./Kasen_Kilonova_Models_2017-master/kilonova_models/*.h5"
+# z=0
+# z=sys.argv[1]
+z = 0.009787
+path = "/home/sonic/Research/yourpy/gppy/table/Kasen_Kilonova_Models_2017/kilonova_models/*.h5"
 filelist = glob.glob(path)
 c = 2.99792458e10
 ca = 2.99792458e18
-filters = ['u','g','r','i','z','U','B','V','R','I']
+# filters = ['u','g','r','i','z','U','B','V','R','I']
+# filters = ['g', 'r', 'i']
+filters = ['g', 'r', 'i', 'J', 'Ks']
 
 for nfilelist in filelist:
 	print (nfilelist)
 #	f = open(nfilelist+'_mag'+'.dat','w')
-	f = open(nfilelist+'_z'+str(z)+'_mag'+'.dat','w')
+	f = open('/data1/S190425z/1.result/table/jkim/'+os.path.basename(nfilelist)+'_z'+str(z)+'_mag'+'.dat', 'w')
+	# f.write('day u g r i z U B V R I\n')
+	f.write('day g r i J Ks\n')	
 	fin = h5py.File(nfilelist,'r')
 	nu = np.array(fin['nu'],dtype='d')
 	times = np.array(fin['time'])
@@ -40,7 +45,8 @@ for nfilelist in filelist:
 		Lflux = Llam/(4*3.141592*(3.086e+19)**2)
 
 		for j,nfilter in enumerate(filters):
-			filterdatname = glob.glob('*'+nfilter+'.dat')
+			# filterdatname = glob.glob('*'+nfilter+'.dat')
+			filterdatname = glob.glob('/home/sonic/Research/yourpy/gppy/table/filter_transmission/'+nfilter+'*.dat')
 			filterdat = np.loadtxt(filterdatname[0])
 			lamf = filterdat[:,0]
 			filt = filterdat[:,1]

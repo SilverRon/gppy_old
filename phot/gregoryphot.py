@@ -212,9 +212,10 @@ path_refcat	= '/home/sonic/Research/cat/refcat'
 #------------------------------------------------------------
 obstbl		= ascii.read(path_obs+'/obs.txt')
 #	TARGET COORD.	[deg]
-# tra, tdec = 185.733875, 15.826			#	SN2019ehk
+# tra, tdec = 185.733875, 15.826		#	SN2019ehk
 # tra, tdec = 258.3414923, -9.964393723	#	ZTF19aarykkb
-tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
+# tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
+tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
 #------------------------------------------------------------
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
@@ -225,11 +226,12 @@ imlist.sort()
 for img in imlist: print(img)
 
 photlist	= []
-refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
+# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
 # refcatname	= 'SDSS'
 # refcatname	= 'APASS'
-# refcatname	= '2MASS'
-phottype	= 'subt'		#	(normal/subt/depth)
+refcatname	= '2MASS'
+phottype	= 'normal'
+# phottype	= 'subt'		#	(normal/subt/depth)
 # phottype	= 'depth'
 starttime	= time.time()
 #============================================================

@@ -1,6 +1,5 @@
-#	PHOTOMETRY CODE FOR PYTHON 3.X, AND BULK OF KMTNet IMAGES
+#	PHOTOMETRY CODE FOR PYTHON 3.X
 #	CREATED	2019.06.20	Gregory S.H. Paek
-#	MODIFIED 2019.07.26 Gregory S.H. Paek
 #============================================================
 import os, glob
 import numpy as np
@@ -12,6 +11,8 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.wcs import WCS
+#from multiprocessing import Process, Pool
+#import multiprocessing as mp
 from imsng import phot
 import time
 #============================================================
@@ -21,7 +22,6 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	#	HEADER INFO
 	hdr			= fits.getheader(inim)
-	'''
 	try:
 		w			= WCS(inim)
 		radeg, dedeg= w.all_pix2world(xcent, ycent, 1)
@@ -30,12 +30,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		print('BAD WCS INFORMATION?')
 		radeg,dedeg	= hdr['CRVAL1'], hdr['CRVAL2']
 	#xcent, ycent= w.all_world2pix(radeg, dedeg, 1)
-	'''
-	w			= WCS(inim)
 	xcent, ycent= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
-
-	radeg, dedeg= w.all_pix2world(xcent, ycent, 1)
-	radeg, dedeg= np.asscalar(radeg), np.asscalar(dedeg)
 	#------------------------------------------------------------
 	try:
 		date_obs	= hdr['date-obs']
@@ -45,10 +40,9 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		jd			= None
 	#------------------------------------------------------------
 	#	NAME INFO
-	# part			= inim.split('-')
-	# obs, obj		= part[1], part[2]
-	# refmagkey		= part[5]
-	obs, obj, refmagkey = 'KMTNET', inim[:-5], 'R'
+	part			= inim.split('-')
+	obs, obj		= part[1], part[2]
+	refmagkey		= part[5]
 	refmagerkey 	= refmagkey+'err'
 	indx_obs		= np.where(obstbl['obs']==obs)
 	gain, pixscale	= obstbl[indx_obs]['gain'][0], obstbl[indx_obs]['pixelscale'][0]
@@ -59,7 +53,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	if		refcatname	== 'PS1':
 		if path_refcat+'/ps1-'+obj+'.cat' not in refcatlist:
-			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=1.5)
+			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=3.0)
 		else:
 			querytbl	= ascii.read(path_refcat+'/ps1-'+obj+'.cat')
 		reftbl, refcat  = phot.ps1_Tonry(querytbl, obj)
@@ -78,15 +72,6 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 			querytbl        = ascii.read(path_refcat+'/apass-'+obj+'.cat')
 		reftbl, refcat  = phot.apass_Blaton(querytbl, obj)
 	#------------------------------------------------------------
-	elif	refcatname	== 'NOMAD':
-		if path_refcat+'/nomad-'+obj+'.cat' not in refcatlist:
-			querytbl        = phot.nomad_query(obj, radeg, dedeg, path_refcat, radius=3.0)
-		else:
-			querytbl        = ascii.read(path_refcat+'/nomad-'+obj+'.cat')
-		# reftbl, refcat  = phot.apass_Blaton(querytbl, obj)
-		reftbl = querytbl
-		reftbl['ra'], reftbl['dec'], reftbl['R'], reftbl['Rerr'] = querytbl['RAJ2000'], querytbl['DEJ2000'], querytbl['Rmag'], np.zeros(len(querytbl))
-	#------------------------------------------------------------
 	elif	refcatname	== '2MASS':
 		if path_refcat+'/2mass-'+obj+'.cat' not in refcatlist:
 			querytbl        = phot.twomass_query(obj, radeg, dedeg, path_refcat, band=refmagkey, radius=1.0)
@@ -97,29 +82,21 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#	SourceEXtractor
 	#------------------------------------------------------------
 	peeing, seeing	= phot.psfex(inim, pixscale)
-
-	if seeing == 0.0:
-		seeing = 5.0
-
 	param_secom	= dict(	inim=inim,
 						gain=gain, pixscale=pixscale, seeing=seeing,
-						det_sigma=3,
+						det_sigma=detsig,
 						backsize=str(64), backfiltersize=str(3),
-						psf=True, check=False)
+						psf=True, check=True)
 	intbl0, incat	= phot.secom(**param_secom)
 	#	CENTER POS. & DIST CUT
 	deldist		= phot.sqsum((xcent-intbl0['X_IMAGE']), (ycent-intbl0['Y_IMAGE']))
 	indx_dist	= np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
 	intbl		= intbl0[indx_dist]
 	intbl.write(incat, format='ascii', overwrite=True)
-
-	peeing = np.median(intbl['FWHM_IMAGE'])
-	seeing = peeing*pixscale
-
 	#	MATCHING
 	param_match	= dict(	intbl=intbl, reftbl=reftbl,
 						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
-						refra=reftbl['ra'], refdec=reftbl['dec'])
+						refra=reftbl['ra'], refdec=reftbl['dec'], sep=10)
 	mtbl		= phot.matching(**param_match)
 	#------------------------------------------------------------
 	#	ZEROPOINT CALCULATION
@@ -130,10 +107,10 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						inmagerkey=aperture,
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
-						refmaglower=14,
-						refmagupper=17,
+						refmaglower=1,
+						refmagupper=15,
 						refmagerupper=0.1,
-						inmagerupper=0.1)
+						inmagerupper=0.2)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
 						inmagkey=inmagkey, inmagerkey=inmagerkey,
 						refmagkey=refmagkey, refmagerkey=refmagerkey,
@@ -185,7 +162,8 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	if phottype == 'normal':
 		intbl['REAL_'+inmagkey]		= zp + intbl[inmagkey]
 		intbl['REAL_'+inmagerkey]	= phot.sqsum(zper, intbl[inmagerkey])
-		indx_targ	= phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=seeing)
+		indx_targ	= phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=10)
+		intbl.write(path_base+inim[:-5]+'-phot.dat', format='ascii', overwrite=True)
 		if indx_targ != None:
 			mag, mager	= intbl[indx_targ]['REAL_'+inmagkey], intbl[indx_targ]['REAL_'+inmagerkey]
 		else:
@@ -212,6 +190,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		subtbl, subcat	= phot.secom(**param_subcom)
 		subtbl['REAL_'+inmagkey]	= zp + subtbl[inmagkey]
 		subtbl['REAL_'+inmagerkey]	= phot.sqsum(zper, subtbl[inmagerkey])
+		sutbl.write(path_base+inim[:-5]+'-phot.dat', format='ascii', overwrite=True)
 		indx_targ	= phot.targetfind(tra, tdec, subtbl['ALPHA_J2000'], subtbl['DELTA_J2000'], sep=seeing)
 		if indx_targ != None:
 			mag, mager	= subtbl[indx_targ]['REAL_'+inmagkey], subtbl[indx_targ]['REAL_'+inmagerkey]
@@ -223,7 +202,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	elif phottype == 'depth':
 		mag, mager	= -99, -99
 
-	onetbl	= Table([[inim[2:]], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
+	onetbl	= Table([[inim], [obs], [obj], [round(radeg, 3)], [round(dedeg, 3)], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul, 3)], [mag], [mager]],
 					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'skyval', 'skysig', 'ul', 'mag', 'magerr'))
 	return onetbl
 #============================================================
@@ -235,38 +214,40 @@ path_refcat	= '/home/sonic/Research/cat/refcat'
 #------------------------------------------------------------
 obstbl		= ascii.read(path_obs+'/obs.txt')
 #	TARGET COORD.	[deg]
-tra, tdec	= 185.733875, 15.826			#	SN2019ehk
+# tra, tdec = 185.733875, 15.826		#	SN2019ehk
+# tra, tdec = 258.3414923, -9.964393723	#	ZTF19aarykkb
+# tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
+tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
 #------------------------------------------------------------
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
 #------------------------------------------------------------
-os.system('ls tr*.fits')
-imlist		= glob.glob(input('image to process\t: '))
+os.system('ls *.fits')
+# imlist		= glob.glob(input('image to process\t: '))
+imlist = glob.glob('C*-*0.fits')
 imlist.sort()
 for img in imlist: print(img)
 
 photlist	= []
-# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS/NOMAD)
+# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
 # refcatname	= 'SDSS'
-refcatname	= 'APASS'
-# refcatname	= 'NOMAD'
-# refcatname	= '2MASS'
+# refcatname	= 'APASS'
+refcatname	= '2MASS'
+phottype	= 'normal'
 # phottype	= 'subt'		#	(normal/subt/depth)
-phottype	= 'depth'
+# phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
-photfail = []
 for inim in imlist:
 	try:
 		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
 							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
-							detsig=3.0, frac=0.99)
+							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
-		os.system('rm psf*.fits snap*.fits *.psf *.xml seg.fits')
+		# os.system('rm psf*.fits snap*.fits *.xml seg.fits')
 	except:
-		photfail.append(inim)
 		pass
 #------------------------------------------------------------
 #	FINISH

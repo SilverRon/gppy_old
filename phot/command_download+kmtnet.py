@@ -74,7 +74,8 @@ for image in kmtbl['image']:
 		#------------------------------------------------------------
 		#	SourceEXtractor
 		#------------------------------------------------------------
-		intbl0, incat, fwhm_pix, fwhm_arcsec	= secom(inim, gain=gain, pixscale=pixscale, det_sigma=detectsig, backsize=str(64))
+		fwhm_pix, fwhm_arcsec = psfex(inim, pixscale)
+		intbl0, incat	= secom(inim, gain=gain, pixscale=pixscale, det_sigma=detectsig, backsize=str(64))
 		#	APPROXIMATE CENTER POS. & DIST CUT
 		xim_cent, yim_cent	= np.max(intbl0['X_IMAGE'])/2, np.max(intbl0['Y_IMAGE'])/2
 		im_dist		= sqsum((xim_cent-intbl0['X_IMAGE']), (yim_cent-intbl0['Y_IMAGE']))

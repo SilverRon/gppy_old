@@ -1,4 +1,4 @@
-#!/home/sonic/anaconda3/envs/astroconda/lib python3.7
+#!/home/sonic/anaconda3/envs/astroconda/bin/python
 # -*- coding: utf-8 -*-
 #============================================================
 #	IMSNG MONITORING NEW TRANSIENT WITH TNS QUERY CODE
@@ -192,158 +192,156 @@ def getCurrentStrTime():
 #============================================================#
 #	MAIN BODY
 #============================================================#
-for i in range(206265):
-	starttime = time.time()
-	outname = 'IMSNG-TNS-{}.dat'.format(getCurrentStrTime())
-	#------------------------------------------------------------
-	path_obs = '/home/sonic/Research/table/obs.txt'
-	path_input = '/home/sonic/Research/table/imsng-alltarget.dat'
-	path_save = '/data1/IMSNG'
-	refcats = glob.glob('/data1/IMSNG/*.dat')
-	refcats.sort()
-	path_ref = refcats[-1]
-	#------------------------------------------------------------
-	obstbl = ascii.read(path_obs)
-	reftbl = ascii.read(path_ref)
-	intbl = ascii.read(path_input)
-	#------------------------------------------------------------
-	radius = 15
-	units = 'arcmin'
-	#------------------------------------------------------------
-	cols = ('field',
-			'objname',
-			'hostname',
-			'discoverydate',
-			'discoverymag',
-			'discmagfilter',
-			'internal_name',
-			'ra',
-			'radeg',
-			'dec',
-			'decdeg',
-			'object_type',
-			'sep_arcmin')
-	#------------------------------------------------------------
-	tblist = []
-	rowlist = []
-	for i in range(len(intbl)):
-		obj = intbl['obj'][i]
-		ra, dec = intbl['ra'][i], intbl['dec'][i]
-		c = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
+starttime = time.time()
+outname = 'IMSNG-TNS-{}.dat'.format(getCurrentStrTime())
+#------------------------------------------------------------
+path_obs = '/home/sonic/Research/table/obs.txt'
+path_input = '/home/sonic/Research/table/imsng-alltarget.dat'
+path_save = '/data1/IMSNG'
+refcats = glob.glob('/data1/IMSNG/IMSNG-TNS*.dat')
+refcats.sort()
+path_ref = refcats[-1]
+#------------------------------------------------------------
+obstbl = ascii.read(path_obs)
+reftbl = ascii.read(path_ref)
+intbl = ascii.read(path_input)
+#------------------------------------------------------------
+radius = 15
+units = 'arcmin'
+#------------------------------------------------------------
+cols = ('field',
+		'objname',
+		'hostname',
+		'discoverydate',
+		'discoverymag',
+		'discmagfilter',
+		'internal_name',
+		'ra',
+		'radeg',
+		'dec',
+		'decdeg',
+		'object_type',
+		'sep_arcmin')
+#------------------------------------------------------------
+tblist = []
+rowlist = []
+for i in range(len(intbl)):
+	obj = intbl['obj'][i]
+	ra, dec = intbl['ra'][i], intbl['dec'][i]
+	c = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
 
-		print('PROCESS\t{}\t[{}/{}]'.format(obj, i+1, len(intbl)))
-		search_obj = [("ra",ra), ("dec",dec), ("radius",radius), ("units",units),
-					("objname",""), ("internal_name","")]                    
-		response = search(url_tns_sandbox_api,search_obj)
-		tnames = []
-		if None not in response:
-			json_data = format_to_json(response.text)
-			json_dict = json.loads(json_data)
-			if len(json_dict['data']['reply']) != 0:
-				transients = ''
-				for i in range(len(json_dict['data']['reply'])):
-					tname = json_dict['data']['reply'][i]['objname']
-					tnames.append(tname)
-					transients = transients+tname+','
-				transients = transients[:-1]
-			else:
-				transients = 'None'
+	print('PROCESS\t{}\t[{}/{}]'.format(obj, i+1, len(intbl)))
+	search_obj = [("ra",ra), ("dec",dec), ("radius",radius), ("units",units),
+				("objname",""), ("internal_name","")]                    
+	response = search(url_tns_sandbox_api,search_obj)
+	tnames = []
+	if None not in response:
+		json_data = format_to_json(response.text)
+		json_dict = json.loads(json_data)
+		if len(json_dict['data']['reply']) != 0:
+			transients = ''
+			for i in range(len(json_dict['data']['reply'])):
+				tname = json_dict['data']['reply'][i]['objname']
+				tnames.append(tname)
+				transients = transients+tname+','
+			transients = transients[:-1]
 		else:
 			transients = 'None'
-			print(response[1])
-		for qname in tnames:
-			# onetbl = query_transient_routine_simple(qname)
-			# onetbl['imsng'] = intbl['obj'][i]
-			# tblist.append(onetbl)
-			onerows = query_transient_routine_simple(qname, field=obj, c=c)
-			rowlist.append(onerows)
-	comtbl = Table(rows=rowlist, names=cols)
-	#------------------------------------------------------------
-	#	CHECK NEW TRANSIENTs
-	#------------------------------------------------------------
-	newlist = []
-	for i, objname in enumerate(comtbl['objname']):
-		if objname not in reftbl['objname']:
-			newlist.append(comtbl[i])
-	if len(newlist) == 0:
-		print('THERE IS NO NEW ONE.')
-		pass
 	else:
-		print('NEW TRANSIDENT WAS REPORTED. SEND E-MAIL TO STAFFs...')
-		#------------------------------------------------------------
-		#	SAVE TABLEs
-		#------------------------------------------------------------
-		comtbl.write(path_save+'/'+outname, format='ascii', overwrite=True)
-		# ascii.write(comtbl, path_save+'/'+outname, format='fixed_width_two_line')
-		newtbl = vstack(newlist)
-		# newtbl.write(path_save+'/NEW-'+outname, format='ascii', overwrite=True)
-		ascii.write(newtbl, path_save+'/NEW-'+outname, format='fixed_width_two_line')
-		#------------------------------------------------------------
-		#	MAIL SETTING
-		#------------------------------------------------------------
-		reciver = ascii.read('/home/sonic/Research/table/imsng-mail-reciver.txt')
-		subject	= '[IMSNG] {} NEW TRANSIENTs'.format(getCurrentStrTime())
-		# contents= 'CONTENTS'
-		import codecs
-		contents= codecs.open(path_save+'/NEW-'+outname, 'rb', 'utf-8')
-		fromID	= 'ceouobs@gmail.com'
-		fromPW	= 'ceou@snu'
-		toIDs	= ''
-		for address in reciver['address']: toIDs += address+','
-		toIDs	= toIDs[:-1]
-		# toIDs	= "gregorypaek94@gmail.com"
-		# ccIDs	= 'gundam_psh@naver.com'
-		import glob
-		# path	= glob.glob(save_path+'/'+eventname+'-*.txt')
-		import os
-		import smtplib
-		from email.mime.base import MIMEBase
-		from email.mime.text import MIMEText
-		from email.mime.image import MIMEImage
-		from email.mime.multipart import MIMEMultipart
-		from email.header import Header  
-		#msg		= MIMEBase('mixed')
-		#msg		= MIMEText(contents, 'plain', 'utf-8')
-		msg		= MIMEMultipart()
-		msg['Subject']	= Header(s=subject, charset="utf-8")
-		msg['From']		= fromID
-		msg['To']		= toIDs
-		msg.attach(MIMEText(contents.read()))
-		'''
-		#	ATTACH TEXT FILE ON MAIL
-		if path != None:
-			if type(path) != list:
-				filelist	= []
-				filelist.append(path)
-			else:
-				filelist	= path
-			for file in filelist:
-				part	= MIMEBase("application", "octet-stream")
-				part.set_payload(open(file, 'rb').read())
-				part.add_header(	'Content-Disposition',
-									'attachment; filename="%s"'% os.path.basename(file))
-				msg.attach(part)
-		#	ATTACH PNG FILE ON MAIL
-		pnglist		= glob.glob(save_path+'/'+eventname+'*.png')
-		for png in pnglist:
-			fp		= open(png, 'rb')
-			img		= MIMEImage(fp.read())
-			fp.close()
-			img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(png))
-			msg.attach(img)
-		'''
-		#------------------------------------------------------------
-		#	SEND MAIL
-		#------------------------------------------------------------
-		#	ACCESS TO GMAIL
-		smtp_gmail = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-		smtp_gmail.login(fromID, fromPW)
-		# smtp_gmail.sendmail(msg["From"], msg["To"].split(",") + msg["Cc"].split(","), msg.as_string())
-		smtp_gmail.sendmail(msg["From"], msg["To"].split(","), msg.as_string())
-		smtp_gmail.quit()
-		# comment	= 'Send '+str(path)+'\nFrom\t'+fromID+'\nTo'; print(comment); print(toIDs)
-		print('SENDING E-MAIL COMPLETE.')
+		transients = 'None'
+		print(response[1])
+	for qname in tnames:
+		# onetbl = query_transient_routine_simple(qname)
+		# onetbl['imsng'] = intbl['obj'][i]
+		# tblist.append(onetbl)
+		onerows = query_transient_routine_simple(qname, field=obj, c=c)
+		rowlist.append(onerows)
+comtbl = Table(rows=rowlist, names=cols)
+#------------------------------------------------------------
+#	CHECK NEW TRANSIENTs
+#------------------------------------------------------------
+newlist = []
+for i, objname in enumerate(comtbl['objname']):
+	if objname not in reftbl['objname']:
+		newlist.append(comtbl[i])
+if len(newlist) == 0:
+	print('THERE IS NO NEW ONE.')
+	pass
+else:
+	print('NEW TRANSIDENT WAS REPORTED. SEND E-MAIL TO STAFFs...')
+	#------------------------------------------------------------
+	#	SAVE TABLEs
+	#------------------------------------------------------------
+	comtbl.write(path_save+'/'+outname, format='ascii', overwrite=True)
+	# ascii.write(comtbl, path_save+'/'+outname, format='fixed_width_two_line')
+	newtbl = vstack(newlist)
+	# newtbl.write(path_save+'/NEW-'+outname, format='ascii', overwrite=True)
+	ascii.write(newtbl, path_save+'/NEW-'+outname, format='fixed_width_two_line')
+	#------------------------------------------------------------
+	#	MAIL SETTING
+	#------------------------------------------------------------
+	reciver = ascii.read('/home/sonic/Research/table/imsng-mail-reciver.txt')
+	subject	= '[IMSNG] {} NEW TRANSIENTs'.format(getCurrentStrTime())
+	# contents= 'CONTENTS'
+	import codecs
+	contents= codecs.open(path_save+'/NEW-'+outname, 'rb', 'utf-8')
+	fromID	= 'ceouobs@gmail.com'
+	fromPW	= 'ceou@snu'
+	toIDs	= ''
+	for address in reciver['address']: toIDs += address+','
+	toIDs	= toIDs[:-1]
+	# toIDs	= "gregorypaek94@gmail.com"
+	# ccIDs	= 'gundam_psh@naver.com'
+	import glob
+	# path	= glob.glob(save_path+'/'+eventname+'-*.txt')
+	import os
+	import smtplib
+	from email.mime.base import MIMEBase
+	from email.mime.text import MIMEText
+	from email.mime.image import MIMEImage
+	from email.mime.multipart import MIMEMultipart
+	from email.header import Header  
+	#msg		= MIMEBase('mixed')
+	#msg		= MIMEText(contents, 'plain', 'utf-8')
+	msg		= MIMEMultipart()
+	msg['Subject']	= Header(s=subject, charset="utf-8")
+	msg['From']		= fromID
+	msg['To']		= toIDs
+	msg.attach(MIMEText(contents.read()))
+	'''
+	#	ATTACH TEXT FILE ON MAIL
+	if path != None:
+		if type(path) != list:
+			filelist	= []
+			filelist.append(path)
+		else:
+			filelist	= path
+		for file in filelist:
+			part	= MIMEBase("application", "octet-stream")
+			part.set_payload(open(file, 'rb').read())
+			part.add_header(	'Content-Disposition',
+								'attachment; filename="%s"'% os.path.basename(file))
+			msg.attach(part)
+	#	ATTACH PNG FILE ON MAIL
+	pnglist		= glob.glob(save_path+'/'+eventname+'*.png')
+	for png in pnglist:
+		fp		= open(png, 'rb')
+		img		= MIMEImage(fp.read())
+		fp.close()
+		img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(png))
+		msg.attach(img)
+	'''
+	#------------------------------------------------------------
+	#	SEND MAIL
+	#------------------------------------------------------------
+	#	ACCESS TO GMAIL
+	smtp_gmail = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+	smtp_gmail.login(fromID, fromPW)
+	# smtp_gmail.sendmail(msg["From"], msg["To"].split(",") + msg["Cc"].split(","), msg.as_string())
+	smtp_gmail.sendmail(msg["From"], msg["To"].split(","), msg.as_string())
+	smtp_gmail.quit()
+	# comment	= 'Send '+str(path)+'\nFrom\t'+fromID+'\nTo'; print(comment); print(toIDs)
+	print('SENDING E-MAIL COMPLETE.')
 
-	deltime	= time.time() - starttime
-	print('\nDone.\t\t[{0} sec]'.format(round(deltime, 1)))
-	time.sleep(10800)
+deltime	= time.time() - starttime
+print('\nDone.\t\t[{0} sec]'.format(round(deltime, 1)))

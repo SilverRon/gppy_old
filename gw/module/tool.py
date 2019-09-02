@@ -1,5 +1,6 @@
 #	USEFUL FUNC.(TOOL) IN IMSNG MODULE
-#	CREATED IN 19.03.03 BY GREGORY S.H. PAEK
+#	2019.03.03	CREATED BY Gregory S.H. Paek
+#	2019.08.29	UPDATED BY Gregory S.H. Paek
 #============================================================
 def timename():
 	'''
@@ -67,78 +68,6 @@ def detection(name, ra, dec, time, location):
 	targetaltaz_night   = target.transform_to(frame_night)
 
 	return targetaltaz_night
-#------------------------------------------------------------
-def rts_maker(filename, savepath, obs, obstbl, intbl, date, hhmmss):
-	from astropy.coordinates import Angle
-	import numpy as np
-	import os, glob, sys
-	from astropy import units as u
-	from astropy.time import Time
-	from astropy.coordinates import SkyCoord, EarthLocation, AltAz
-	from astropy.coordinates import get_sun, get_moon
-	from astropy.io import ascii
-	from astropy.table import Table, Column
-
-	indx_obs	= np.where(obstbl['obs'] == obs)
-	lat, lon, height = obstbl['lat'][indx_obs], obstbl['lon'][indx_obs], obstbl['height'][indx_obs]
-	utoff, ul	= obstbl['utoff'][indx_obs], obstbl['ul'][indx_obs]
-
-	lat		    = lat		* u.deg		# North
-	lon		    = lon		* u.deg		# East
-	height		= height	* u.m
-	utoff		= utoff		* u.hour
-	ul			= 20					# limiting magnitude
-
-	location    = EarthLocation(lat=lat, lon=lon, height=height)
-
-	time        = Time('20'+date[0:2]+'-'+date[2:4]+'-'+date[4:6]+' 00:00:00')+utoff
-	risetime	= []
-	maxtime		= []
-	settime		= []
-	namelist	= []
-	ralist		= []
-	delist		= []
-
-	for i in range(len(intbl)):
-		name, ra, dec		= intbl['name'][i], intbl['ra'][i], intbl['dec'][i]
-		targetaltaz_night	= detection(name, ra, dec, time, location)
-		try:
-			alt_max             = np.max(targetaltaz_night.alt)
-			alt_max_time		= targetaltaz_night.obstime[targetaltaz_night.alt == alt_max] + utoff
-			alt_rise30_time		= targetaltaz_night.obstime[targetaltaz_night.alt >= 25 * u.deg][0] + utoff
-			alt_set30_time		= targetaltaz_night.obstime[targetaltaz_night.alt <= 0 * u.deg][0] + utoff
-
-			if alt_max >= 30.0 *u.deg:
-
-				risetime.append(alt_rise30_time.value[0][11:])
-				maxtime.append(alt_max_time.value[0][11:])
-				settime.append(alt_set30_time.value[0][11:])
-				namelist.append(name)
-				ralist.append(Angle(str(ra)+'d').to_string(unit=u.hour, sep=':'))
-				delist.append(Angle(str(dec)+'d').to_string(unit=u.degree, sep=':'))
-		except:
-			pass
-
-	risetime	= np.array(risetime)
-	maxtime		= np.array(maxtime)
-	settime		= np.array(settime)
-	namelist	= np.array(namelist)
-	ralist		= np.array(ralist)
-	delist		= np.array(delist)
-
-	targettbl	= Table(	[namelist, ralist, delist, risetime, maxtime, settime], names=['name', 'ra', 'dec', 'rise', 'transit', 'set'])
-
-	ascii.write(	targettbl,
-					output=savepath+date+'/'+date+'-'+hhmmss+'-targetlist-'+obs+'-'+filename+'.txt',
-					format='fixed_width',
-					delimiter=None,
-					overwrite=True)
-	'''
-	ascii.write(	targettbl,
-					output=savepath+date+'/'+date+'-'+hhmmss+'-targetlist-'+obs+'-'+filename+'.txt',
-					delimiter=None,
-					overwrite=True)
-	'''
 #------------------------------------------------------------
 def sendmail(filename, subject, sendID, sendPW, reciver):
 	'''
@@ -212,195 +141,34 @@ def send_gmail(subject, contents, fromID, fromPW, toIDs, ccIDs=None, path=None):
 	smtp_gmail.quit()
 	comment	= 'Send '+str(path)+'\nFrom\t'+fromID+'\nTo'; print(comment); print(toIDs)
 #------------------------------------------------------------
-def calc_rts(filename, observatory, obsdate, dts, obsinfofile, catname, altlimit=30., moonseperation=30.):
-	#cal_visibility.py - Changsu Choi, 2015/02/01
-	#calculate rise transit set time and moon distance for observation of IMSNG
-	#to be changed : adding observatory, bar plot, adding object, calculating for all nights of 2015  
-
-	# Usage : python cal_visibility.py obsdate dts
-	# python cal_visibility.py 2015/03/21 1
-	# python 3 ported, 2019-03-05, changsu choi
-
-	import mskpy.observing as obs
-	from astropy.coordinates import Angle
-	import astropy.units as u
-	from astropy.io import ascii
-	from astropy.table import Table, vstack
-	import ephem
+def abs2app(mag, magerr, gwdist, gwdiststd):
 	import numpy as np
-	import string
-	import os, sys
-	import astropy.coordinates as coord
-
-
-	#	altitite and moon seperation parameter
-	#moon serperation is a little bit close (2~3 deg)
-	#altlimit		= 25.
-	#moonseperation	= 30.
-	#observatory		= 'LOAO'
-	#obsdate			= '2019/10/06'
-	#dts				= '0'
-
-	observatory		= str(observatory)
-	obsdate			= str(obsdate)
-	dts				= str(dts)
-	moonsepcut		= 360.-moonseperation
-	
-	#obs_info		= ascii.read("obs_info.dat")
-	obs_info		= ascii.read(obsinfofile)
-
-	if type(catname)==str	: tdata	= ascii.read(catname)
-	else					: tdata = catname
-	#catname			= 'targetlist_test.dat'
-	
-	#	Obseravatory information
-	indx_obs		= np.where(observatory == obs_info['obs'])
-	obsname			= obs_info['obs'][indx_obs][0]
-	obslat			= obs_info['lat'][indx_obs][0]
-	obslon			= obs_info['lon'][indx_obs][0]
-	obstz			= obs_info['utoff'][indx_obs][0]
-
-	observ			= ephem.Observer()
-	observ.date		= obsdate+' 01:00:00'
-	observ.lon		= str(obslon)
-	observ.lat		= str(obslat)
-	observ.elevation= obs_info['height'][indx_obs][0]
-
-	#	Day Time Saving
-	if int(dts)	==0:
-		#print ('No day Time saving')
-		dts	= float(dts)
-	else:
-		#print ('Ok then I will plus 1 hr to local time.')
-		dts	= float(dts)
-
-	#	objects from catalog file
-	objname			= tdata['name']
-	ra				= tdata['ra']
-	dec				= tdata['dec']
-	prior			= tdata['sort']
-
-	radd			= ra
-	decdd			= dec
-
-	#	Moon distance and information
-	mcoord			= ephem.Moon()
-	mcoord.compute(obsdate)
-	#print ('Moon ra, dec \n')
-	mheader			='Moon ra, dec'
-	#print (mcoord.ra,mcoord.dec,'\n')
-	minfo			= mheader+' '+str(mcoord.ra)+' '+str(mcoord.dec)+'\n'
-	mphase			= ephem.Moon(obsdate+' 00:00:00')
-	#print ('Moon phase : '+ "%.2f" % mphase.moon_phase)
-	mphasestr		='Moon phase : '+ "%.2f" % mphase.moon_phase +'\n'
-
-	#	Angular distance calculation
-	def angsep(ra1deg, dec1deg, ra2deg, dec2deg) : 
-		ra1rad		= ra1deg*np.pi/180
-		dec1rad		= dec1deg*np.pi/180
-		ra2rad		= ra2deg*np.pi/180
-		dec2rad		= dec2deg*np.pi/180
-		cos_a		= np.sin(dec1rad)*np.sin(dec2rad)+(np.cos(dec1rad)*np.cos(dec2rad)*np.cos(ra1rad-ra2rad))
-		anglesep	= np.arccos(cos_a)*180/np.pi
-		return anglesep
-
-	'''
-	targets			= []
-	targets.append(rad)
-	targets.append(decd)
-	targets.append(objname)
-	'''
-	msep			= angsep(radd,decdd, np.degrees(mcoord.ra), np.degrees(mcoord.dec))
-
-	#sunrise calculation
-	observ.horizon	= '-18'
-	sunrise			= observ.next_rising(ephem.Sun())
-	sunset			= observ.previous_setting(ephem.Sun())
-
-	aaa				= ephem.Date.tuple(sunset)
-	#hrr				= int(aaa[3]+obstz+dts+24)
-	hrr				= int(aaa[3]+obstz+dts)
-	mrr				= aaa[4]
-	#print ('sunset : '+str(hrr)+':'+str(mrr))
-	sunsetstr		= '-18 deg sunset : '+str(int(hrr))+':'+str(mrr)+'\n'
-	sunseti			= hrr + mrr/60. + 0.25
-
-	bbb				= ephem.Date.tuple(sunrise)
-	hrr				= bbb[3]+obstz+dts
-	mrr				= bbb[4]
-	#print ('sunrise : '+str(int(hrr))+':'+str(mrr))
-	sunrisestr		= '-18 deg sunrise : '+str(int(hrr))+':'+str(mrr)+'\n'
-	sunriseti		= hrr + mrr/60. -0.25
-
-	#f				= open("rts_vis_"+obsdate[0:4]+obsdate[5:7]+obsdate[8:10]+"_"+observatory+".txt",'w')
-	f				= open(filename,'w')
-
-	#g				= open("targets.data",'w')
-
-	#header			= '{:25s}	{:12s}	{:10s}	{:5s}	{:5s}	{:5s}	{:5s}	{:1s}'.format('name', 'ra', 'dec', 'rise(LT)', 'transit(LT)', 'set(LT)', 'moon_dist(deg)', 'sort')+'\n'
-	header			= 'name ra dec rise(LT) transit(LT) set(LT) moon_dist(deg) sort \n'
-
-	dashline		= '#'+'-'*60+'\n'
-	f.write(obsdate)
-	f.write('\nobservatory = '+observatory+'\n')
-	f.write(sunsetstr)
-	f.write(sunrisestr)
-	f.write(minfo)
-	f.write(mphasestr)
-	f.write('alt limit = '+str(altlimit)+'\n')
-	f.write('Moon seeperation = '+str(moonseperation)+'\n')
-	f.write(dashline)
-	f.write(header)
-
-	pobj			= []
-	prt				= []
-	ptt				= []
-	pst				= []
-
-	telescope		= obs.Observer(obslon*u.deg, obslat*u.deg, dts+obstz, obsdate, observatory)
-
-	for n in range(len(objname)):
-		ra_hms		= Angle(str(ra[n])+'d').to_string(unit=u.hour, sep=':')[:-2]
-		de_hms		= Angle(str(dec[n])+'d').to_string(unit=u.deg, sep=':')[:-3]
-		#	35 deg altitute cut
-		rtscal		= obs.rts(radd[n], decdd[n], obsdate, obslon, obslat, float(obstz)+dts, limit=altlimit, precision=1440)
-		rt			= rtscal[0]
-		tt			= rtscal[1]
-		st			= rtscal[2]
-
-		if rtscal[0]==None:
-			#print (objname[n], ra_hms, de_hms, rtscal[0], rtscal[1], rtscal[2],"%.2f" % msep[n])
-			vis=objname[n]+' '+ra_hms+' '+de_hms+ ' '+str(rtscal[0])+' '+ str(rtscal[1])+' '+ str(rtscal[2])+' '+str(int(msep[n]))+ str(prior[n])+'\n'	
-			#f.write(vis)
-			#print(vis)
-		
-		elif sunriseti < rtscal[0] < sunseti and sunriseti < rtscal[2] < sunseti and sunriseti < rtscal[1] < sunseti : 
-			#print ('It can be seen in daytime!')
-			pass
-		#	moon seperation = 50 deg cut	
-		elif msep[n] < moonseperation :
-			#print (objname[n]+' too close to Moon < '+str(moonseperation)+' deg')
-			pass
-		elif msep[n] > moonsepcut :
-			#print (objname[n]+' is close to the Moon by ',str(360-msep[n])+' deg') 		 	
-			pass
-		else:
-			rtp		= "%.2d" % int(rt)+':'+"%.2d" % int((rt-int(rt))*60)
-			ttp		= "%.2d" % int(tt)+':'+"%.2d" % int((tt-int(tt))*60)
-			stp		= "%.2d" % int(st)+':'+"%.2d" % int((st-int(st))*60)
-			vis		= '{:25s}	{:12s}	{:10s}	{:5s}	{:5s}	{:5s}	{:5s}	{:1s}'.format(objname[n], ra_hms, de_hms, rtp, ttp, stp, str(int(msep[n])), str(prior[n]))+'\n'
-			f.write(vis)
-			#print(vis)
-			#targets	= objname[n]+' , '+ra_hms+' hr , '+de_hms+' deg \n'
-			#g.write(targets)
-			#print (objname[n], ra_hms, de_hms, rtp, ttp, stp, "%.2f" % msep[n])
-		
-	f.close()
-	#g.close()
-	#os.system('pluma '+"rts_vis_"+obsdate[0:4]+obsdate[5:7]+obsdate[8:10]+"_loao.txt &")
-	#targetfile		="rts_vis_"+obsdate[0:4]+obsdate[5:7]+obsdate[8:10]+".txt"
+	app		= 5*np.log10(gwdist)-5+mag
+	apperr	= 5*gwdiststd/(gwdist*np.log(10))
+	return app, apperr
 #------------------------------------------------------------
-def ds9regmaker(filename, intbl, name, racol, deccol):
+def GW170817_like(gwdist, gwdiststd):
+	import numpy as np
+	m0		= 17.476	#	[AB] in i-band (t0+10h)
+	m0err	= 0.018	
+	dist0	= 38.4		#	[MPC]	Im et al. 2017
+	dist0err= 8.9
+	m		= m0+5.*np.log10(gwdist/dist0)
+	merr	= np.sqrt( (m0err)**2 + ((5.*gwdiststd)/(gwdist*np.log(10)))**2 + ((5.*dist0err)/(dist0*np.log(10)))**2 )
+	return m, merr
+#------------------------------------------------------------
+def func_linear(a, x, scaling=[0, 0]):
+	xpt, ypt= scaling[0], scaling[1]
+	ydel	= ypt - (-1*a*xpt)
+	return -1*a*x + ydel
+#------------------------------------------------------------
+def calc_app(mag, magerr, gwdist0, gwdiststd0, gwdist1, gwdiststd1):
+	import numpy as np
+	app		= mag+5*np.log10(gwdist1/gwdist0)
+	apperr	= np.sqrt( (magerr)**2 + ((5*gwdiststd1)/(np.log(5)*gwdist1))**2 + ((5*gwdiststd0)/(np.log(5)*gwdist0))**2 )
+	return app, apperr
+#------------------------------------------------------------
+def ds9regmaker(filename, name, ra, dec):
 	import os,sys
 	import string
 	from astropy.io import ascii 
@@ -412,14 +180,9 @@ def ds9regmaker(filename, intbl, name, racol, deccol):
 	name		= 'NUMBER'
 	intbl		= ascii.read(filename)
 	'''
-
-	ra		=	intbl[racol]
-	dec		=	intbl[deccol]
-	starname=	intbl[name]            # intbl['NUMBER']
-
 	radius	= """ 5" """
 	color	= "green"
-	f		= open(filename+'.reg', 'w')
+	f		= open(filename, 'w')
 
 	head1	= "# Region file format: DS9 version 4.1\n"
 	head2	= """global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n"""
@@ -430,7 +193,7 @@ def ds9regmaker(filename, intbl, name, racol, deccol):
 	f.write(head3)
 
 	for n in range(len(ra)):
-		body="circle("+str(ra[n])+","+str(dec[n])+","+radius+") # color="+color+" text={"+str(starname[n])+"}\n"	
+		body="circle("+str(ra[n])+","+str(dec[n])+","+radius+") # color="+color+" text={"+str(name[n])+"}\n"	
 		f.write(body)
 	f.close()
 #------------------------------------------------------------

@@ -36,7 +36,7 @@ healpixfits	= input('BAYSTAR PATH\t: ')
 # if confidence	== '': confidence = 0.9
 # if role			== '': role = 'test'
 # if eventname	== '': eventname = 'test'
-confidence, role, eventname = 0.9, 'observation', 'S190425z_Update'
+confidence, role, eventname = 0.1, 'observation', 'S190822c-Preliminary-0.1'
 
 #------------------------------------------------------------#
 save_healfix	= './'
