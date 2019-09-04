@@ -75,10 +75,11 @@ def drawLC(obstbl, obs, param_obs):
 	plt.errorbar(plotbl['Phase'], plotbl['ul'], yerr=plotbl['ulstd'], **param_obs[obs.lower()], **param_plot)
 #------------------------------------------------------------
 
+
 #------------------------------------------------------------
 #	PATH
 #------------------------------------------------------------
-path_save = '.'
+path_save = '/data1/S190425z/1.result/figure'
 path_figure = '/data1/S190425z/1.result/figure'
 path_base = '/data1/S190425z/1.result/table'
 path_gw170817 = path_base+'/GW170817_Villar+17_LC.dat'
@@ -186,37 +187,72 @@ tt5tbl.meta = t5tbl.meta
 #------------------------------------------------------------
 #	PLOT
 #------------------------------------------------------------
+band = 'i'
 plt.close('all')
+fig = plt.figure()
+ax = plt.subplot(111)
 # for intbl in [bluetbl, redtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl, comtbl]:
-for intbl in [tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
-# for intbl in [bluetbl, redtbl]:
-# for intbl in [comtbl]:
-	indx = np.where((intbl['Band']=='K')&(intbl['Phase']<10.0))
+# for intbl in [tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+for intbl in [bluetbl, redtbl, comtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+	indx = np.where((intbl['Band']==band)&(intbl['Phase']<10.0))
+	if len(indx[0]) == 0:
+		indx = np.where((intbl['Band']==band+'s')&(intbl['Phase']<10.0))
 	pltbl = intbl[indx]
-	plt.errorbar(intbl[indx]['Phase'], intbl[indx]['Mag0'], yerr=intbl[indx]['e_Mag0'], label=intbl.meta['name'])
-	'''
-	plt.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
-									y2=pltbl['Mag0']-pltbl['e_Mag0'],
-									facecolor='lightgrey',
-									interpolate=True)
-	plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']+intbl[indx]['e_Mag0'], color='lightgrey', alpha=0.5)
-	plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']-intbl[indx]['e_Mag0'], color='lightgrey', alpha=0.5)
-	plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color='grey', label=intbl.meta['name'])
-	'''
-# plt.errorbar(comtbl[indx]['Phase'], comtbl[indx]['Mag0'], yerr=comtbl[indx]['e_Mag0'], label=intbl.meta['name'])
+	if intbl.meta['name'] == 'GW170817':
+		ax.errorbar(intbl[indx]['Phase'], intbl[indx]['Mag0'], yerr=intbl[indx]['e_Mag0'],
+					marker='o', color='grey', alpha=0.5,
+					capsize=5, capthick=1,
+					linestyle='None', label=intbl.meta['name'])
+	if 'KN' in intbl.meta['name']:
+		if 'Blue' in intbl.meta['name']:
+			c, fc = 'blue', 'dodgerblue'
+		elif 'Red' in intbl.meta['name']:
+			c, fc = 'red', 'tomato'
+		
+		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
+										y2=pltbl['Mag0']-pltbl['e_Mag0'],
+										facecolor=fc,
+										alpha=0.5,
+										interpolate=True,
+										label=intbl.meta['name'])
+		
+		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']+intbl[indx]['e_Mag0'], color=fc, alpha=0.5)
+		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']-intbl[indx]['e_Mag0'], color=fc, alpha=0.5)
+		ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color=c, alpha=0.5)
+	elif 'knova' in intbl.meta['name']:
+		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
+										y2=pltbl['Mag0']-pltbl['e_Mag0'],
+										# facecolor=fc,
+										alpha=0.5,
+										interpolate=True,
+										label=(intbl.meta['name']).split('_')[1])
+		ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], alpha=0.5)
+		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color=c, alpha=0.5)
 
-# for obs in ['kmtnet', 'loao', 'lsgt', 'sao']:
-# for obs in ['squean']:
-for obs in ['ukirt']:
+# plt.errorbar(comtbl[indx]['Phase'], comtbl[indx]['Mag0'], yerr=comtbl[indx]['e_Mag0'], label=intbl.meta['name'])
+if band == 'r':
+	obslist = ['kmtnet', 'loao', 'lsgt', 'sao']
+elif band == 'i':
+	obslist = ['squean']
+elif band == 'K':
+	obslist = ['ukirt']
+for obs in obslist:
 	drawLC(obstbl, obs, param_obs)
 
 #------------------------------------------------------------
+chartBox = ax.get_position()
+ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.8, chartBox.height])
+ax.legend(loc='upper center', bbox_to_anchor=(1.15, 1.00), shadow=False, ncol=1, fontsize=15, frameon=False)
+#------------------------------------------------------------
 plt.gca().invert_yaxis()
+plt.title('{}-band'.format(band), fontsize=20)
 plt.xlim([0, 3])
 plt.xlabel('Phase [days]', fontsize=20)
 plt.ylabel('AB magnitude', fontsize=20)
-plt.ylim([30, 18])
-plt.yticks(np.arange(18, 30, 1))
-plt.legend(fontsize=20, loc='lower left')
+plt.ylim([26.5, 18.5])
+plt.xticks(fontsize=15)
+plt.yticks(np.arange(18, 30, 1), fontsize=15)
+plt.legend(fontsize=15, loc='lower left')
 plt.minorticks_on()
 plt.tight_layout()
+plt.savefig('{}/S190425z_obs+model_in{}band.png'.format(path_save, band), overwrite=True)

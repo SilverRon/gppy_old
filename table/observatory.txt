@@ -1,0 +1,16 @@
+name	longitude(E+)	latitude(N+)	altitude	timezone
+#Based on Im et al. 2019
+#Timezone name https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568
+#
+SAO		126.9533	+37.4570	190		Asia/Seoul
+BOAO	128.9766	+36.1648	1162	Asia/Seoul
+SOAO	128.4564	+36.9344	1340	Asia/Seoul
+DOAO	127.4467	+37.5264	81		Asia/Seoul
+McD		255.9783	+30.6717	2076	US/Central
+MAO		66.8964 	+38.6728	2593	Asia/Tashkent
+LOAO	249.2114	+32.4422	2776	US/Arizona
+SSO		149.0644	-31.2733	1122	Australia/NSW
+Spain	357.6736	+38.1656	1650	Europe/Madrid
+NMex	254.4717	+32.9036	2225	US/Mountain
+Calif	240.5872	+37.1203	1405	US/Pacific
+UKIRT	204.5290	+19.8225	4205	US/Hawaii
