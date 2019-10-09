@@ -5,8 +5,9 @@ def fnamechange_ukirt_raw(inim, obj):
 	#	GATHER PARTS
 	obs		= hdr['TELESCOP']
 	# obj		= hdr['MSBTITLE'].split(':')[0]
-	obj = 'GRB190829A'
-	date	= hdr['UTDATE'][2:]
+	# obj = 'GRB190829A'
+	# date	= hdr['UTDATE'][2:]
+	date = hdr['UTDATE']
 	ut_pre	= hdr['DATE-OBS'].split('T')[1]
 	ut		= ut_pre[0:2]+ut_pre[3:5]+ut_pre[6:8]
 	filte	= hdr['FILTER']

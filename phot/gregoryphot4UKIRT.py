@@ -96,7 +96,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#	MATCHING
 	param_match	= dict(	intbl=intbl, reftbl=reftbl,
 						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
-						refra=reftbl['ra'], refdec=reftbl['dec'], sep=10)
+						refra=reftbl['ra'], refdec=reftbl['dec'], sep=2)
 	mtbl		= phot.matching(**param_match)
 	#------------------------------------------------------------
 	#	ZEROPOINT CALCULATION
@@ -107,8 +107,8 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						inmagerkey=aperture,
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
-						refmaglower=1,
-						refmagupper=15,
+						refmaglower=10,
+						refmagupper=16,
 						refmagerupper=0.1,
 						inmagerupper=0.2)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -223,8 +223,8 @@ tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
 #------------------------------------------------------------
 os.system('ls *.fits')
-# imlist		= glob.glob(input('image to process\t: '))
-imlist = glob.glob('C*-*0.fits')
+imlist		= glob.glob(input('image to process\t: '))
+# imlist = glob.glob('C*-*0.fits')
 imlist.sort()
 for img in imlist: print(img)
 
@@ -233,9 +233,9 @@ photlist	= []
 # refcatname	= 'SDSS'
 # refcatname	= 'APASS'
 refcatname	= '2MASS'
-phottype	= 'normal'
+# phottype	= 'normal'
 # phottype	= 'subt'		#	(normal/subt/depth)
-# phottype	= 'depth'
+phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
@@ -261,3 +261,4 @@ else:
 	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
 	deltime		= time.time() - starttime
 	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
+os.system('rm snap*.fits psf-*.fits *aper.fits *.sub.fits *.bkg.fits')

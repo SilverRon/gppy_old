@@ -36,15 +36,41 @@ print('{0}\nMAIN PART FOR GW ALERT IS STANDBY.\n{1}\n\n\n'.format('='*60, '='*60
 
 #	TEST ALERT
 import lxml.etree
+'''
 path_test = '/home/gw/Research/test'
 payload		= open(path_test+'/MS181101ab-1-Preliminary.xml', 'rb').read()
 root		= lxml.etree.fromstring(payload)
-
+'''
 @gcn.handlers.include_notice_types(
 	gcn.notice_types.LVC_PRELIMINARY,
 	gcn.notice_types.LVC_INITIAL,
 	gcn.notice_types.LVC_UPDATE)
 def process_gcn(payload, root):
+	import gcn
+	import gcn.handlers
+	import gcn.notice_types
+	import healpy as hp
+	import numpy as np
+	import time
+	import os, glob
+	from astropy.table import Table, Column, MaskedColumn, vstack
+	import astropy.units as u
+	from astropy.coordinates import SkyCoord
+	from astropy.io import ascii
+	import matplotlib.pyplot as plt
+	from imsng import gw
+	from imsng import tool
+	from ligo.skymap.postprocess import find_greedy_credible_levels
+	#------------------------------------------------------------
+	import astropy.utils.data
+	#------------------------------------------------------------
+	#	FOR THE GALAXY CROSS MATCHING
+	from astropy.table import Table, vstack, hstack, Column
+	import ligo.skymap.plot
+	from scipy.stats import norm
+	import scipy.stats
+	import warnings
+	warnings.filterwarnings(action='ignore')
 	'''
 	EXTRACT CONFIDENCE MAP FROM BAYESTAR FILE
 	'''
@@ -191,16 +217,19 @@ def process_gcn(payload, root):
 	print('# MAKE TARGET LIST FOR EACH OBSERVATORIES (.txt)')
 	if params['AlertType'] == 'Preliminary':
 		deldays	= 0
-		tblcut = 0.99
+		tblcut = 0.50
 	elif params['AlertType'] == 'Initial':
 		deldays = 1
 		tblcut = 0.95
 	elif params['AlertType'] == 'Update':
 		deldays = 2
-		tblcut = 0.90
+		tblcut = 0.99
+	elif role == 'test':
+		deldays = 0
+		tblcut = 0.50
 	else:
 		deldays = 0
-		tblcut = 0.90
+		tblcut = 0.50
 
 	cutbl = cantbl[cantbl['cumsum']<tblcut]
 	rtstbl = Table()

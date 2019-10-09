@@ -72,10 +72,11 @@ def drawLC(obstbl, obs, param_obs):
 	param_plot = dict(	capsize=10, capthick=1,
 						marker='v', ms=20, mec='k', ecolor='k',
 						linestyle='', alpha=1.0)
-	plt.errorbar(plotbl['Phase'], plotbl['ul'], yerr=plotbl['ulstd'], **param_obs[obs.lower()], **param_plot)
-#------------------------------------------------------------
-
-
+	if 'kmtnet-' in obs:
+		observat = obs.split('-')[1]
+		plt.errorbar(plotbl['Phase'], plotbl['ul'], yerr=plotbl['ulstd'], **param_obs[observat.lower()], **param_plot)
+	else:
+		plt.errorbar(plotbl['Phase'], plotbl['ul'], yerr=plotbl['ulstd'], **param_obs[obs.lower()], **param_plot)
 #------------------------------------------------------------
 #	PATH
 #------------------------------------------------------------
@@ -84,7 +85,8 @@ path_figure = '/data1/S190425z/1.result/figure'
 path_base = '/data1/S190425z/1.result/table'
 path_gw170817 = path_base+'/GW170817_Villar+17_LC.dat'
 # path_obs = '/data1/S190425z/1.result/Update/phot_upd_sources_GECKO.dat'
-path_obs = '/data1/S190425z/1.result/table/obs_all.dat'
+# path_obs = '/data1/S190425z/1.result/table/obs_all.dat'
+path_obs = '/data1/S190425z/1.result/table/obs_all_kmtnetsplit.dat'
 
 #------------------------------------------------------------
 path_kasen_blue = path_base+'/knova_d1_n10_m0.025_vk0.30_Xlan1e-4.0.h5_z0.009787_mag.dat'
@@ -95,6 +97,8 @@ path_tanaka_apr4_1314 = path_base+'/knova_APR4-1314_Mej0.8e-2_LCabs.dat'	#	Table
 path_tanaka_h4_1215 = path_base+'/knova_H4-1215_Mej0.4e-2_LCabs.dat'		#	Table3
 path_tanaka_h4_1314 = path_base+'/knova_H4-1314_Mej0.07e-2_LCabs.dat'		#	Table4
 path_tanaka_sly_135 = path_base+'/knova_Sly-135_Mej2.0e-2_LCabs.dat'		#	Table5
+#------------------------------------------------------------
+path_piro = path_base+'/cocoon_Piro+18.dat'
 #------------------------------------------------------------
 #	SETTING
 #------------------------------------------------------------
@@ -111,7 +115,13 @@ param_obs = dict(	loao =	dict(mfc='gold',
 								label='SAO'),
 					lsgt =	dict(mfc='yellowgreen',
 								label='LSGT'),
-					kmtnet= dict(mfc='dodgerblue',
+					sso = dict(mfc='aquamarine',
+							label='KMTNet-SSO'),
+					saao = dict(mfc='lightseagreen',
+							label='KMTNet-SAAO'),
+					ctio = dict(mfc='teal',
+							label='KMTNet-CTIO'),
+					kmtnet= dict(mfc='olive',
 								label='KMTNet'),
 					squean= dict(mfc='purple',
 								label='SQUEAN'),
@@ -129,6 +139,8 @@ gwtbl = asciiread(path_gw170817)
 kbltbl = asciiread(path_kasen_blue)
 krdtbl = asciiread(path_kasen_red)
 #------------------------------------------------------------
+#	DIFFERENT EOS (TANAKA)
+#------------------------------------------------------------
 # t1tbl = ascii.read(path_tanaka_apr4_1215)
 # t2tbl = ascii.read(path_tanaka_apr4_1314)
 t1tbl = asciiread(path_tanaka_apr4_1215)
@@ -136,6 +148,10 @@ t2tbl = asciiread(path_tanaka_apr4_1314)
 t3tbl = asciiread(path_tanaka_h4_1215)
 t4tbl = asciiread(path_tanaka_h4_1314)
 t5tbl = asciiread(path_tanaka_sly_135)
+#------------------------------------------------------------
+#	COCOON MODEL (Piro) - DIFFERENT FORMAT WITH OTHERS (VERTICAL)
+#------------------------------------------------------------
+ctbl = asciiread(path_piro)
 #------------------------------------------------------------
 #	GW170817 LC TABLE -> FOR EACH FILTERS(BANDS)
 tblist = splinetable(gwtbl, ['r', 'R', 'i', 'J', 'Ks'])
@@ -187,13 +203,14 @@ tt5tbl.meta = t5tbl.meta
 #------------------------------------------------------------
 #	PLOT
 #------------------------------------------------------------
-band = 'i'
+band = 'r'
 plt.close('all')
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 8))
 ax = plt.subplot(111)
 # for intbl in [bluetbl, redtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl, comtbl]:
-# for intbl in [tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
-for intbl in [bluetbl, redtbl, comtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+# for intbl in [bluetbl, redtbl, comtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+for intbl in [bluetbl, redtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+# for intbl in [bluetbl, redtbl]:
 	indx = np.where((intbl['Band']==band)&(intbl['Phase']<10.0))
 	if len(indx[0]) == 0:
 		indx = np.where((intbl['Band']==band+'s')&(intbl['Phase']<10.0))
@@ -207,52 +224,82 @@ for intbl in [bluetbl, redtbl, comtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
 		if 'Blue' in intbl.meta['name']:
 			c, fc = 'blue', 'dodgerblue'
 		elif 'Red' in intbl.meta['name']:
-			c, fc = 'red', 'tomato'
-		
+			c, fc = 'red', 'tomato'		
 		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
 										y2=pltbl['Mag0']-pltbl['e_Mag0'],
 										facecolor=fc,
-										alpha=0.5,
+										alpha=0.3,
 										interpolate=True,
 										label=intbl.meta['name'])
 		
 		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']+intbl[indx]['e_Mag0'], color=fc, alpha=0.5)
 		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0']-intbl[indx]['e_Mag0'], color=fc, alpha=0.5)
-		ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color=c, alpha=0.5)
+		# ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color=c, alpha=0.5)
 	elif 'knova' in intbl.meta['name']:
 		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
 										y2=pltbl['Mag0']-pltbl['e_Mag0'],
 										# facecolor=fc,
-										alpha=0.5,
+										alpha=0.3,
 										interpolate=True,
 										label=(intbl.meta['name']).split('_')[1])
-		ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], alpha=0.5)
+		# ax.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], alpha=0.5)
 		# plt.plot(intbl[indx]['Phase'], intbl[indx]['Mag0'], color=c, alpha=0.5)
+#------------------------------------------------------------
+#	COCOON MODEL PLOT
+#------------------------------------------------------------
+ctbl0 = ctbl[(ctbl['filter']==band)&(ctbl['delmjd']<0.5)]
+if band == 'K':
+	ctbl0 = ctbl[(ctbl['filter']=='J')&(ctbl['delmjd']<3.0)]
+cphase = ctbl0['delmjd']
+cmag, cmager = abs2app(ctbl0['absmag'], 0, dist0, dist0er)
+ax.fill_between(cphase, y1=cmag+cmager,
+						y2=cmag-cmager,
+						facecolor='blue',
+						alpha=0.5,
+						interpolate=True,
+						label='Cocoon')
+# ax.plot(cphase, cmag, color='blue', alpha=0.5)
 
 # plt.errorbar(comtbl[indx]['Phase'], comtbl[indx]['Mag0'], yerr=comtbl[indx]['e_Mag0'], label=intbl.meta['name'])
+#------------------------------------------------------------
+#	OBSERVATION
+#------------------------------------------------------------
 if band == 'r':
-	obslist = ['kmtnet', 'loao', 'lsgt', 'sao']
+	# obslist = ['kmtnet', 'loao', 'lsgt', 'sao', 'kmtnet-sso',  'kmtnet-saao',  'kmtnet-ctio']
+	obslist = ['loao', 'lsgt', 'sao', 'kmtnet-sso',  'kmtnet-saao',  'kmtnet-ctio']
+
 elif band == 'i':
 	obslist = ['squean']
 elif band == 'K':
 	obslist = ['ukirt']
 for obs in obslist:
 	drawLC(obstbl, obs, param_obs)
-
 #------------------------------------------------------------
+'''
 chartBox = ax.get_position()
 ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.8, chartBox.height])
 ax.legend(loc='upper center', bbox_to_anchor=(1.15, 1.00), shadow=False, ncol=1, fontsize=15, frameon=False)
+'''
 #------------------------------------------------------------
 plt.gca().invert_yaxis()
-plt.title('{}-band'.format(band), fontsize=20)
+# plt.title('{}-band'.format(band), fontsize=20)
 plt.xlim([0, 3])
 plt.xlabel('Phase [days]', fontsize=20)
-plt.ylabel('AB magnitude', fontsize=20)
+plt.ylabel('Absolute magnitude', fontsize=20)
 plt.ylim([26.5, 18.5])
 plt.xticks(fontsize=15)
 plt.yticks(np.arange(18, 30, 1), fontsize=15)
-plt.legend(fontsize=15, loc='lower left')
+# plt.legend(fontsize=15, loc='upper right')
+plt.legend(fontsize=15, loc='lower right')
 plt.minorticks_on()
+#------------------------------------------------------------
+ax0 = ax.twinx()
+ax.tick_params(which='both', direction='in', labelsize=15)
+ax.minorticks_on()
+ax0.tick_params(which='both', direction='in', labelsize=15)
+ax0.set_ylim(29-5*np.log10(dist0)+5, 18-5*np.log10(dist0)+5)
+ax0.minorticks_on()
+ax0.set_ylabel('Apparent magnitude', fontsize=20, rotation=270, labelpad=20)
+#------------------------------------------------------------
 plt.tight_layout()
 plt.savefig('{}/S190425z_obs+model_in{}band.png'.format(path_save, band), overwrite=True)

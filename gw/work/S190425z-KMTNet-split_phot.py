@@ -1,5 +1,6 @@
 #	PHOTOMETRY CODE FOR PYTHON 3.X
-#	CREATED	2019.06.20	Gregory S.H. Paek
+#	2019.06.20	CREATED BY	Gregory S.H. Paek
+#	2019.10.06	MODIFIED BY	Gregory S.H. Paek
 #============================================================
 import os, glob
 import numpy as np
@@ -11,8 +12,6 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.wcs import WCS
-#from multiprocessing import Process, Pool
-#import multiprocessing as mp
 from imsng import phot
 import time
 #============================================================
@@ -40,9 +39,8 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		jd			= None
 	#------------------------------------------------------------
 	#	NAME INFO
-	part			= inim.split('-')
-	obs, obj		= part[1], part[2]
-	refmagkey		= part[5]
+	obs, obj		= 'KMTNET', inim[:-7]
+	refmagkey		= 'R'
 	refmagerkey 	= refmagkey+'err'
 	indx_obs		= np.where(obstbl['obs']==obs)
 	gain, pixscale	= obstbl[indx_obs]['gain'][0], obstbl[indx_obs]['pixelscale'][0]
@@ -67,7 +65,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	elif	refcatname	== 'APASS':
 		if path_refcat+'/apass-'+obj+'.cat' not in refcatlist:
-			querytbl        = phot.apass_query(obj, radeg, dedeg, path_refcat)
+			querytbl        = phot.apass_query(obj, radeg, dedeg, path_refcat, radius=2.0)
 		else:
 			querytbl        = ascii.read(path_refcat+'/apass-'+obj+'.cat')
 		reftbl, refcat  = phot.apass_Blaton(querytbl, obj)
@@ -87,16 +85,19 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						det_sigma=detsig,
 						backsize=str(64), backfiltersize=str(3),
 						psf=True, check=False)
-	intbl0, incat	= phot.secom(**param_secom)
+	# intbl0, incat	= phot.secom(**param_secom)
+	intbl, incat	= phot.secom(**param_secom)
+	'''
 	#	CENTER POS. & DIST CUT
 	deldist		= phot.sqsum((xcent-intbl0['X_IMAGE']), (ycent-intbl0['Y_IMAGE']))
 	indx_dist	= np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
 	intbl		= intbl0[indx_dist]
 	intbl.write(incat, format='ascii', overwrite=True)
+	'''
 	#	MATCHING
 	param_match	= dict(	intbl=intbl, reftbl=reftbl,
 						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
-						refra=reftbl['ra'], refdec=reftbl['dec'])
+						refra=reftbl['ra'], refdec=reftbl['dec'], sep=2.0)
 	mtbl		= phot.matching(**param_match)
 	#------------------------------------------------------------
 	#	ZEROPOINT CALCULATION
@@ -108,7 +109,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=10,
-						refmagupper=19,
+						refmagupper=16,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -212,36 +213,31 @@ path_refcat	= '/home/sonic/Research/cat/refcat'
 #------------------------------------------------------------
 obstbl		= ascii.read(path_obs+'/obs.txt')
 #	TARGET COORD.	[deg]
-# tra, tdec = 185.733875, 15.826		#	SN2019ehk
-# tra, tdec = 258.3414923, -9.964393723	#	ZTF19aarykkb
-# tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
-tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
 #------------------------------------------------------------
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
 #------------------------------------------------------------
-os.system('ls *.fits')
-imlist		= glob.glob(input('image to process\t: '))
-imlist.sort()
+kmtnetkey	= 'nn'
+imlist		= glob.glob('a*{}-4*.fits'.format(kmtnetkey))
+# imlist.sort()
+for inim in glob.glob('a*{}-*.fits'.format(kmtnetkey)):
+	if '-4' not in inim:
+		imlist.append(inim)
+	
 for img in imlist: print(img)
-print(len(imlist))
 
 photlist	= []
-# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
-# refcatname	= 'SDSS'
-# refcatname	= 'APASS'
-refcatname	= '2MASS'
-phottype	= 'normal'
-# phottype	= 'subt'		#	(normal/subt/depth)
-# phottype	= 'depth'
+refcatname	= 'APASS'
+phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
 for inim in imlist:
 	try:
+		plt.ioff()
 		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
-							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
+							tra=0, tdec=0, path_base='./', aperture='MAG_APER_7',
 							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
 		os.system('rm psf*.fits snap*.fits *.xml seg.fits')
@@ -254,8 +250,8 @@ if len(photlist) == 0:
 	print('PHOTOMETRY FAILED!')
 else:
 	photbl		= vstack(photlist)
-	if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
-		os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
-	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
+	if 'phot-{}.dat'.format(kmtnetkey) in glob.glob(path_base+'/phot-{}.dat'.format(kmtnetkey)):
+		os.system('mv {} {}'.format(path_base+'/phot-{}.dat'.format(kmtnetkey), path_base+'/phot-{}.dat.bkg'.format(kmtnetkey)))
+	photbl.write(path_base+'/phot-{}.dat'.format(kmtnetkey), format='ascii', overwrite=True)
 	deltime		= time.time() - starttime
 	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')

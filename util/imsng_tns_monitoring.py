@@ -276,7 +276,8 @@ else:
 	# ascii.write(comtbl, path_save+'/'+outname, format='fixed_width_two_line')
 	newtbl = vstack(newlist)
 	# newtbl.write(path_save+'/NEW-'+outname, format='ascii', overwrite=True)
-	ascii.write(newtbl, path_save+'/NEW-'+outname, format='fixed_width_two_line')
+	# ascii.write(newtbl, path_save+'/NEW-'+outname, format='fixed_width_two_line')
+	ascii.write(newtbl, path_save+'/NEW-'+outname, format='ascii')
 	#------------------------------------------------------------
 	#	MAIL SETTING
 	#------------------------------------------------------------
