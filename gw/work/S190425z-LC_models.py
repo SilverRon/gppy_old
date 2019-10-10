@@ -78,6 +78,34 @@ def drawLC(obstbl, obs, param_obs):
 	else:
 		plt.errorbar(plotbl['Phase'], plotbl['ul'], yerr=plotbl['ulstd'], **param_obs[obs.lower()], **param_plot)
 #------------------------------------------------------------
+def drawLC2(obstbl, obs, param_obs):
+	plotbl = obstbl[obstbl['obs']==obs.upper()]
+	param_plot = dict(	capsize=10, capthick=1,
+						marker='v', ms=20, mec='k', ecolor='k',
+						linestyle='', alpha=1.0)
+	if 'kmtnet-' in obs:
+		observat = obs.split('-')[1]
+		'''
+		plt.errorbar(plotbl['Phase'], plotbl['ul'],
+					yerr=[plotbl['yer1'], plotbl['yer2']], xerr=[plotbl['xer1'], plotbl['xer2']],
+					**param_obs[observat.lower()], **param_plot)
+		'''
+		plt.errorbar(plotbl['Phase'], plotbl['ul'],
+					xerr=[plotbl['xer1'], plotbl['xer2']],
+					**param_obs[observat.lower()], **param_plot)
+	else:
+		'''
+		plt.errorbar(plotbl['Phase'], plotbl['ul'],
+					yerr=[plotbl['yer1'], plotbl['yer2']], xerr=[plotbl['xer1'], plotbl['xer2']],
+					**param_obs[obs.lower()], **param_plot)
+		'''
+		plt.errorbar(plotbl['Phase'], plotbl['ul'],
+					xerr=[plotbl['xer1'], plotbl['xer2']],
+					**param_obs[obs.lower()], **param_plot)
+
+
+
+#------------------------------------------------------------
 #	PATH
 #------------------------------------------------------------
 path_save = '/data1/S190425z/1.result/figure'
@@ -86,13 +114,13 @@ path_base = '/data1/S190425z/1.result/table'
 path_gw170817 = path_base+'/GW170817_Villar+17_LC.dat'
 # path_obs = '/data1/S190425z/1.result/Update/phot_upd_sources_GECKO.dat'
 # path_obs = '/data1/S190425z/1.result/table/obs_all.dat'
-path_obs = '/data1/S190425z/1.result/table/obs_all_kmtnetsplit.dat'
-
+# path_obs = '/data1/S190425z/1.result/table/obs_all_kmtnetsplit.dat'
+path_obs = '/data1/S190425z/1.result/table/obs_complete_20191009.dat'
 #------------------------------------------------------------
 path_kasen_blue = path_base+'/knova_d1_n10_m0.025_vk0.30_Xlan1e-4.0.h5_z0.009787_mag.dat'
 path_kasen_red = path_base+'/knova_d1_n10_m0.040_vk0.15_Xlan1e-1.5.h5_z0.009787_mag.dat'
 #------------------------------------------------------------
-path_tanaka_apr4_1215 = path_base+'/knova_APR4-1314_Mej0.8e-2_LCabs.dat'	#	Table1
+path_tanaka_apr4_1215 = path_base+'/knova_APR4-1215_Mej0.9e-2_LCabs.dat'	#	Table1
 path_tanaka_apr4_1314 = path_base+'/knova_APR4-1314_Mej0.8e-2_LCabs.dat'	#	Table2
 path_tanaka_h4_1215 = path_base+'/knova_H4-1215_Mej0.4e-2_LCabs.dat'		#	Table3
 path_tanaka_h4_1314 = path_base+'/knova_H4-1314_Mej0.07e-2_LCabs.dat'		#	Table4
@@ -111,21 +139,21 @@ t0 = Time('2019-04-25T08:18:05.017', format='isot', scale='utc')
 #	PARAM FOR PLOT
 param_obs = dict(	loao =	dict(mfc='gold',
 								label='LOAO'),
-					sao =	dict(mfc='pink',
+					sao =	dict(mfc='hotpink',
 								label='SAO'),
 					lsgt =	dict(mfc='yellowgreen',
 								label='LSGT'),
-					sso = dict(mfc='aquamarine',
+					sso = dict(mfc='teal',
 							label='KMTNet-SSO'),
-					saao = dict(mfc='lightseagreen',
+					saao = dict(mfc='cyan',
 							label='KMTNet-SAAO'),
-					ctio = dict(mfc='teal',
+					ctio = dict(mfc='deepskyblue',
 							label='KMTNet-CTIO'),
-					kmtnet= dict(mfc='olive',
+					kmtnet= dict(mfc='k',
 								label='KMTNet'),
 					squean= dict(mfc='purple',
 								label='SQUEAN'),
-					ukirt= dict(mfc='grey',
+					ukirt= dict(mfc='slategrey',
 								label='UKIRT')
 				)
 #------------------------------------------------------------
@@ -195,7 +223,7 @@ tt4tbl = vstack(t4tblist)
 tt5tbl = vstack(t5tblist)
 
 tt1tbl.meta = t1tbl.meta
-tt2tbl.meta = t2tbl.meta
+tt2tbl.meta = t2tbl.meta4
 tt3tbl.meta = t3tbl.meta
 tt4tbl.meta = t4tbl.meta
 tt5tbl.meta = t5tbl.meta
@@ -203,13 +231,13 @@ tt5tbl.meta = t5tbl.meta
 #------------------------------------------------------------
 #	PLOT
 #------------------------------------------------------------
-band = 'r'
+band = 'i'
 plt.close('all')
 fig = plt.figure(figsize=(10, 8))
 ax = plt.subplot(111)
 # for intbl in [bluetbl, redtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl, comtbl]:
 # for intbl in [bluetbl, redtbl, comtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
-for intbl in [bluetbl, redtbl, tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+for intbl in [bluetbl, redtbl]:
 # for intbl in [bluetbl, redtbl]:
 	indx = np.where((intbl['Band']==band)&(intbl['Phase']<10.0))
 	if len(indx[0]) == 0:
@@ -260,7 +288,42 @@ ax.fill_between(cphase, y1=cmag+cmager,
 						label='Cocoon')
 # ax.plot(cphase, cmag, color='blue', alpha=0.5)
 
-# plt.errorbar(comtbl[indx]['Phase'], comtbl[indx]['Mag0'], yerr=comtbl[indx]['e_Mag0'], label=intbl.meta['name'])
+#------------------------------------------------------------
+# for intbl in [tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+for intbl in [tt1tbl, tt2tbl, tt3tbl, tt4tbl, tt5tbl]:
+	indx = np.where((intbl['Band']==band)&(intbl['Phase']<10.0))
+	if len(indx[0]) == 0:
+		indx = np.where((intbl['Band']==band+'s')&(intbl['Phase']<10.0))
+	pltbl = intbl[indx]
+	if intbl.meta['name'] == 'GW170817':
+		ax.errorbar(intbl[indx]['Phase'], intbl[indx]['Mag0'], yerr=intbl[indx]['e_Mag0'],
+					marker='o', color='grey', alpha=0.5,
+					capsize=5, capthick=1,
+					linestyle='None', label=intbl.meta['name'])
+	if 'KN' in intbl.meta['name']:
+		if 'Blue' in intbl.meta['name']:
+			c, fc = 'blue', 'dodgerblue'
+		elif 'Red' in intbl.meta['name']:
+			c, fc = 'red', 'tomato'		
+		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
+										y2=pltbl['Mag0']-pltbl['e_Mag0'],
+										facecolor=fc,
+										alpha=0.3,
+										interpolate=True,
+										label=intbl.meta['name'])
+	elif 'knova' in intbl.meta['name']:
+		'''
+		ax.fill_between(pltbl['Phase'],y1=pltbl['Mag0']+pltbl['e_Mag0'],
+										y2=pltbl['Mag0']-pltbl['e_Mag0'],
+										# facecolor=fc,
+										alpha=0.5,
+										interpolate=True,
+										label=(intbl.meta['name']).split('_')[1])
+		'''
+		# ax.plot(pltbl['Phase'], pltbl['Mag0'], alpha=0.5, label='_nolabel_')
+		ax.plot(pltbl['Phase'], pltbl['Mag0'], alpha=0.75, label=(intbl.meta['name']).split('_')[1])
+		# ax.errorbar(pltbl['Phase']+10, pltbl['Mag0'], pltbl['e_Mag0'], alpha=0.5, label=(intbl.meta['name']).split('_')[1])
+
 #------------------------------------------------------------
 #	OBSERVATION
 #------------------------------------------------------------
@@ -273,7 +336,7 @@ elif band == 'i':
 elif band == 'K':
 	obslist = ['ukirt']
 for obs in obslist:
-	drawLC(obstbl, obs, param_obs)
+	drawLC2(obstbl, obs, param_obs)
 #------------------------------------------------------------
 '''
 chartBox = ax.get_position()
@@ -283,14 +346,15 @@ ax.legend(loc='upper center', bbox_to_anchor=(1.15, 1.00), shadow=False, ncol=1,
 #------------------------------------------------------------
 plt.gca().invert_yaxis()
 # plt.title('{}-band'.format(band), fontsize=20)
-plt.xlim([0, 3])
+# plt.xlim([0, 7])
+plt.xlim([0, 4])
 plt.xlabel('Phase [days]', fontsize=20)
-plt.ylabel('Absolute magnitude', fontsize=20)
+plt.ylabel('Apparent magnitude', fontsize=20)
 plt.ylim([26.5, 18.5])
 plt.xticks(fontsize=15)
 plt.yticks(np.arange(18, 30, 1), fontsize=15)
 # plt.legend(fontsize=15, loc='upper right')
-plt.legend(fontsize=15, loc='lower right')
+plt.legend(fontsize=15, loc='lower right', framealpha=1.0)
 plt.minorticks_on()
 #------------------------------------------------------------
 ax0 = ax.twinx()
@@ -299,7 +363,7 @@ ax.minorticks_on()
 ax0.tick_params(which='both', direction='in', labelsize=15)
 ax0.set_ylim(29-5*np.log10(dist0)+5, 18-5*np.log10(dist0)+5)
 ax0.minorticks_on()
-ax0.set_ylabel('Apparent magnitude', fontsize=20, rotation=270, labelpad=20)
+ax0.set_ylabel('Absolute magnitude', fontsize=20, rotation=270, labelpad=20)
 #------------------------------------------------------------
 plt.tight_layout()
 plt.savefig('{}/S190425z_obs+model_in{}band.png'.format(path_save, band), overwrite=True)

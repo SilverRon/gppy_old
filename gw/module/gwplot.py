@@ -1,6 +1,7 @@
 #============================================================
 #	GW PLOT MODULE
 #	2019.08.11	CREATED BY	Gregory S.H. Paek
+#	2019.10.09	UPDATED BY	Gregory S.H. Paek
 #============================================================
 from astropy.coordinates import SkyCoord
 from matplotlib import pyplot as plt
@@ -34,7 +35,8 @@ def skymap(bayestarfits, photbl):
 	ax.grid()
 	ax.minorticks_on()
 	ax.legend(fontsize=15,
-			loc='lower left',
+			# loc='lower left',
+			loc='upper right',
 			markerscale=2,
 			framealpha=1)
 	ax.tick_params(axis='both', which='major', labelsize=20)
@@ -79,6 +81,8 @@ path_phot_ini = '/data1/S190425z/1.result/Initial/phot+score4initial.dat'
 path_phot_upd = '/data1/S190425z/1.result/Update/phot+score4update.dat'
 path_cand_ini = '/data1/S190425z/info/Initial/S190425z_Initial-all_candi.txt'
 path_cand_upd = '/data1/S190425z/info/Update/S190425z_Update-all_candi.txt'
+#	+KMTNet WITH OBSERVATORIES
+path_phot_all = '/data1/S190425z/1.result/phot-S190425z.dat'
 #------------------------------------------------------------
 path_save = '/data1/S190425z/1.result/figure'
 #------------------------------------------------------------
@@ -90,7 +94,13 @@ icantbl = ascii.read(path_cand_ini)
 ucantbl = ascii.read(path_cand_upd)
 tc_ini = SkyCoord(iphotbl['ra'], iphotbl['dec'], frame='icrs', unit='deg')
 tc_upd = SkyCoord(uphotbl['ra'], uphotbl['dec'], frame='icrs', unit='deg')
+
+photbl = ascii.read(path_phot_all)
+
 #------------------------------------------------------------
+#	PLOT SETTING FOR EACH OBSERVATORIES
+#------------------------------------------------------------
+'''
 setting_SAO = dict(marker='+',
 					markersize=10,
 					color='hotpink',
@@ -121,8 +131,68 @@ setting_UKIRT = dict(marker='+',
 					color='slategrey',
 					ls='',
 					label='UKIRT')
-
 setting_obsplot = dict(kmtnet=setting_KMTNET,
+					squean=setting_SQUEAN,
+					ukirt=setting_UKIRT,
+					loao=setting_LOAO,
+					sao=setting_SAO,
+					lsgt=setting_LSGT,)
+'''
+
+setting_SAO = dict(marker='+',
+					markersize=10,
+					color='hotpink',
+					# alpha=0.5,
+					ls='',
+					label='SAO')
+setting_LOAO = dict(marker='+',
+					markersize=10,
+					color='gold',
+					# alpha=0.5,
+					ls='',
+					label='LOAO')
+setting_LSGT = dict(marker='+',
+					markersize=10,
+					color='yellowgreen',
+					# alpha=0.5,
+					ls='',
+					label='LSGT')
+setting_SQUEAN = dict(marker='+',
+					markersize=10,
+					color='purple',
+					# alpha=0.5,
+					ls='',
+					label='SQUEAN')
+#------------------------------------------------------------
+#	KMTNet
+setting_sso = dict(marker='+',
+					markersize=10,
+					color='teal',
+					alpha=0.5,
+					ls='',
+					label='KMTNet-SSO')
+setting_saao = dict(marker='+',
+					markersize=10,
+					color='cyan',
+					alpha=0.5,
+					ls='',
+					label='KMTNet-SAAO')
+setting_ctio = dict(marker='+',
+					markersize=10,
+					color='deepskyblue',
+					alpha=0.5,
+					ls='',
+					label='KMTNet-CTIO')
+#------------------------------------------------------------
+setting_UKIRT = dict(marker='+',
+					markersize=10,
+					color='slategrey',
+					# alpha=0.5,
+					ls='',
+					label='UKIRT')
+setting_obsplot = dict(sso=setting_sso,
+					saao=setting_saao,
+					ctio=setting_ctio,
 					squean=setting_SQUEAN,
 					ukirt=setting_UKIRT,
 					loao=setting_LOAO,
@@ -131,12 +201,15 @@ setting_obsplot = dict(kmtnet=setting_KMTNET,
 #------------------------------------------------------------
 #	SKYMAP
 #------------------------------------------------------------
+'''
 plt.close('all')
 skymap(bayestarfits=path_initial, photbl=iphotbl[iphotbl['jd']<t0_upd.jd])
 plt.savefig(path_save+'/S190425z_Initial_skymap.png', overwrite=True)
+'''
 plt.close('all')
-skymap(bayestarfits=path_update, photbl=uphotbl)
+skymap(bayestarfits=path_update, photbl=photbl)
 plt.savefig(path_save+'/S190425z_Update_skymap.png', overwrite=True)
+'''
 #------------------------------------------------------------
 #	CUMULATIVE SCORE
 #------------------------------------------------------------
@@ -157,7 +230,7 @@ cumscore(obslist=['ukirt'],
          setting_obsplot=setting_obsplot,
          photbl=uphotbl, timestep=1.1, t0=t0)
 plt.savefig(path_save+'/S190425z_ul_JHKband_LC.png', overwrite=True)
-
+'''
 
 '''
 #------------------------------------------------------------
