@@ -1,4 +1,8 @@
 # gppy
+Python codes for studying astronomy in various projects (CEOU, IMSNG, GECKO, ...)
+
+## 2019
+
 2019.05.07  : Made by Gregory S.H. Paek
 
 2019.05.08  : Add new codes (gregister.py, hotpantsrun.py, imcombine.py) in /util/. I applied multiprocess function on two of them.
@@ -9,4 +13,6 @@
 
 2019.05.16  : Add new codes (ds9regmake, etc)
 
-2020.03.02	: Conection betw. vscode & github has been failed.
+## 2020
+
+2020.03.05	: Connection resumed.
