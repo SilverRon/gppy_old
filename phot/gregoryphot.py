@@ -53,7 +53,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	if		refcatname	== 'PS1':
 		if path_refcat+'/ps1-'+obj+'.cat' not in refcatlist:
-			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=3.0)
+			querytbl	= phot.ps1_query(obj, radeg, dedeg, path_refcat, radius=0.5)
 		else:
 			querytbl	= ascii.read(path_refcat+'/ps1-'+obj+'.cat')
 		reftbl, refcat  = phot.ps1_Tonry(querytbl, obj)
@@ -108,7 +108,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagkey=refmagkey,
 						refmagerkey=refmagerkey,
 						refmaglower=10,
-						refmagupper=19,
+						refmagupper=18.5,
 						refmagerupper=0.1,
 						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
@@ -142,7 +142,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	#------------------------------------------------------------
 	#	TARGET PHOTOMETRY
 	#------------------------------------------------------------
-	skymean, skymed, skysig		= phot.bkgest_mask(inim)
+	skymean, skymed, skysig = phot.bkgest_mask(inim)
 	aper	= 2*peeing
 	ul		= phot.limitmag(detsig, zp, aper, skysig)
 	#------------------------------------------------------------
@@ -227,13 +227,13 @@ for img in imlist: print(img)
 print(len(imlist))
 
 photlist	= []
-# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
+refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
 # refcatname	= 'SDSS'
 # refcatname	= 'APASS'
-refcatname	= '2MASS'
-phottype	= 'normal'
+# refcatname	= '2MASS'
+# phottype	= 'normal'
 # phottype	= 'subt'		#	(normal/subt/depth)
-# phottype	= 'depth'
+phottype	= 'depth'
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
@@ -241,7 +241,7 @@ starttime	= time.time()
 for inim in imlist:
 	try:
 		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
-							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
+							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_1',
 							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
 		os.system('rm psf*.fits snap*.fits *.xml seg.fits')

@@ -61,12 +61,13 @@ def subt_routine(inim, refim, ngmode=False, insig=0, refsig=0):
 #============================================================
 path_base	= '.'
 refim	= path_base+'/ref.fits'
-imlist	= glob.glob(path_base+'/Calib-*0.fits')	;imlist.sort()
+imlist	= glob.glob(path_base+'/Calib-*com.fits')	;imlist.sort()
+# imlist	= glob.glob(path_base+'/Calib-*0.fits')	;imlist.sort()
 #------------------------------------------------------------
 for inim in imlist:
-	insig	= fits.getheader(inim)['seeing']/2.355
-	refsig	= fits.getheader(refim)['seeing']/2.355
-	subt_routine(inim, refim, ngmode=False, insig=insig, refsig=refsig)
+	# insig	= fits.getheader(inim)['seeing']/2.355
+	# refsig	= fits.getheader(refim)['seeing']/2.355
+	subt_routine(inim, refim)#, ngmode=True, insig=insig, refsig=refsig)
 #------------------------------------------------------------
 #	MULTI PROCESSING
 #------------------------------------------------------------

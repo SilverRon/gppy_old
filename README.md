@@ -8,3 +8,5 @@
 2019.05.14  : Add new codes (pre-processing, photometry(preliminary))
 
 2019.05.16  : Add new codes (ds9regmake, etc)
+
+2020.03.02	: Conection betw. vscode & github has been failed.

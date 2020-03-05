@@ -98,7 +98,48 @@ def fnamechange_kmtnet(inim):
 	com		= 'cp '+inim+' '+newname
 	print(com)
 	os.system(com)
+#-------------------------------------------------------------------------#
+def fnamechange_soao(inim):
+	from astropy.io import fits
+	import os
+	hdr		= fits.getheader(inim)
+	#	GATHER PARTS
+	obs		= 'SOAO'
+	date_pre= (hdr['DATE-OBS'].split('T')[0]).split('-')
+	date_pre[0]	= date_pre[0][2:]
+	date	= ''.join(date_pre)
+	ut		= ''.join(((hdr['DATE-OBS'].split('T')[1]).split('-')[0]).split(':'))
 
+	filte	= hdr['FILTER']
+	exptime	= str(int(hdr['EXPTIME']))
+	obj		= hdr['OBJECT']
+	parts	= ['Calib', obs, obj, date, ut, filte, exptime+'.fits']
+	newname	= '-'.join(parts)
+	#	COPY RAW -> NEW NAME
+	com		= 'cp '+inim+' '+newname
+	print(com)
+	os.system(com)
+#-------------------------------------------------------------------------#
+def fnamechange_doaofli(inim):
+	from astropy.io import fits
+	import os
+	hdr		= fits.getheader(inim)
+	#	GATHER PARTS
+	obs		= 'DOAO_FLI'
+	date_pre= (hdr['DATE-OBS'].split('T')[0]).split('-')
+	date_pre[0]	= date_pre[0][2:]
+	date	= ''.join(date_pre)
+	ut		= ''.join(((hdr['DATE-OBS'].split('T')[1]).split('-')[0]).split(':'))
+
+	filte	= hdr['FILTER']
+	exptime	= str(int(hdr['EXPTIME']))
+	obj		= hdr['OBJECT']
+	parts	= ['Calib', obs, obj, date, ut, filte, exptime+'.fits']
+	newname	= '-'.join(parts)
+	#	COPY RAW -> NEW NAME
+	com		= 'cp '+inim+' '+newname
+	print(com)
+	os.system(com)
 '''
 #	UKRIT 'w20XX*.fit' DATA
 import os, glob

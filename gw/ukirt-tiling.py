@@ -168,7 +168,8 @@ def fourtiles4ukirt(ra, dec):
 def tbl2msb(comtbl, eventname, path_save):
 	f = open(path_save+'/'+eventname+'-UKIRT-tiling4survey.dat', 'a')
 	for l in range(len(comtbl)):
-		name = np.asscalar(comtbl['tile'][l])
+		# name = np.asscalar(comtbl['tile'][l])
+		name = comtbl['tile'][l].item()
 		c = SkyCoord(ra=comtbl['ra'][l]*u.degree, dec=comtbl['dec'][l]*u.degree, frame='icrs')
 		cstr = c.to_string('hmsdms')
 		cstr = cstr.replace('h', ':')
@@ -269,7 +270,8 @@ if path_save == '': path_save = '.'
 htbl = ascii.read(path_healpix)
 # htbl = htbl[(htbl['dec']>0)&(htbl['dec']<60)]
 indx_max = np.where(htbl['P_2D']==np.max(htbl['P_2D']))
-ramax, demax = np.asscalar(htbl['ra'][indx_max]), np.asscalar(htbl['dec'][indx_max])
+# ramax, demax = np.asscalar(htbl['ra'][indx_max]), np.asscalar(htbl['dec'][indx_max])
+ramax, demax = htbl['ra'][indx_max].item(), htbl['dec'][indx_max].item()
 #------------------------------------------------------------
 #	Declination ITERATION
 #------------------------------------------------------------

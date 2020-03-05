@@ -50,7 +50,7 @@ def process_gcn(payload, root):
 	role	= root.attrib['role']
 
 	if role != 'test':
-		eventname	= params['GraceID']+'_'+params['AlertType']
+		eventname	= params['GraceID']+'-'+params['AlertType']
 
 		save_healfix	= '/data3/gwshare/bayestar/'
 		save_path		= save_healfix+eventname

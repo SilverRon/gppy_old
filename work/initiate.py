@@ -19,4 +19,3 @@ import ligo.skymap.plot
 from scipy.stats import norm
 import scipy.stats
 import warnings
-#	TEST

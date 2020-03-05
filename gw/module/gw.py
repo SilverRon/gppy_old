@@ -588,17 +588,13 @@ def read3Dhealpix2candidates(path_healpix, path_catalog, eventname='GW_signal', 
 	#------------------------------------------------------------
 	confareainfo = dict()
 	credible_levels = find_greedy_credible_levels(prob)
-	'''
 	for conf in conflist:
 		areainconf = np.sum(credible_levels <= conf) * hp.nside2pixarea(nside, degrees=True)
 		confareainfo[str(conf)] = areainconf	
-	'''
 	if header == True:
-		# return cantbl, prob, confareainfo, hdr
-		return cantbl, prob, hdr
+		return cantbl, prob, confareainfo, hdr
 	else:
-		# return cantbl, prob, confareainfo
-		return cantbl, prob
+		return cantbl, prob, confareainfo
 #------------------------------------------------------------
 def plotcumscore(cantbl, probcutlist=[0.5, 0.90, 0.95, 0.99], eventname='GW_signal', path_save='.'):
 	plt.close('all')

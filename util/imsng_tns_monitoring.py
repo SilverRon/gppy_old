@@ -193,6 +193,8 @@ def getCurrentStrTime():
 #	MAIN BODY
 #============================================================#
 starttime = time.time()
+now = datetime.datetime.now()
+print('# {}/{}/{} {}:{}:{}'.format(now.year, now.month, now.day, now.hour, now.minute, now.second))
 outname = 'IMSNG-TNS-{}.dat'.format(getCurrentStrTime())
 #------------------------------------------------------------
 path_obs = '/home/sonic/Research/table/obs.txt'
@@ -230,7 +232,7 @@ for i in range(len(intbl)):
 	ra, dec = intbl['ra'][i], intbl['dec'][i]
 	c = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
 
-	print('PROCESS\t{}\t[{}/{}]'.format(obj, i+1, len(intbl)))
+	# print('PROCESS\t{}\t[{}/{}]'.format(obj, i+1, len(intbl)))
 	search_obj = [("ra",ra), ("dec",dec), ("radius",radius), ("units",units),
 				("objname",""), ("internal_name","")]                    
 	response = search(url_tns_sandbox_api,search_obj)

@@ -18,7 +18,7 @@ import time
 #============================================================
 #	FUNCTION
 #============================================================
-def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture='MAG_APER_7', detsig=3.0, frac=0.95):
+def phot_routine(inim, refcatname, phottype, dual, tra, tdec, path_base='./', aperture='MAG_APER_7', detsig=1.5, frac=0.95):
 	#------------------------------------------------------------
 	#	HEADER INFO
 	hdr			= fits.getheader(inim)
@@ -87,7 +87,15 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						det_sigma=detsig,
 						backsize=str(64), backfiltersize=str(3),
 						psf=True, check=True)
-	intbl0, incat	= phot.secom(**param_secom)
+	param_dual = dict(	inim=inim,
+						gain=gain, pixscale=pixscale, seeing=seeing,
+						det_sigma=detsig,
+						backsize=str(64), backfiltersize=str(3),
+						detect='detection.fits')
+	if dual == False:
+		intbl0, incat	= phot.secom(**param_secom)
+	elif dual == True:
+		intbl0, incat	= phot.sedualcom(**param_dual)
 	#	CENTER POS. & DIST CUT
 	deldist		= phot.sqsum((xcent-intbl0['X_IMAGE']), (ycent-intbl0['Y_IMAGE']))
 	indx_dist	= np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
@@ -109,8 +117,8 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 						refmagerkey=refmagerkey,
 						refmaglower=10,
 						refmagupper=16,
-						refmagerupper=0.1,
-						inmagerupper=0.2)
+						refmagerupper=0.05,
+						inmagerupper=0.1)
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
 						inmagkey=inmagkey, inmagerkey=inmagerkey,
 						refmagkey=refmagkey, refmagerkey=refmagerkey,
@@ -162,7 +170,7 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 	if phottype == 'normal':
 		intbl['REAL_'+inmagkey]		= zp + intbl[inmagkey]
 		intbl['REAL_'+inmagerkey]	= phot.sqsum(zper, intbl[inmagerkey])
-		indx_targ	= phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=10)
+		indx_targ	= phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=5)
 		intbl.write(path_base+inim[:-5]+'-phot.dat', format='ascii', overwrite=True)
 		if indx_targ != None:
 			mag, mager	= intbl[indx_targ]['REAL_'+inmagkey], intbl[indx_targ]['REAL_'+inmagerkey]
@@ -194,8 +202,10 @@ def phot_routine(inim, refcatname, phottype, tra, tdec, path_base='./', aperture
 		indx_targ	= phot.targetfind(tra, tdec, subtbl['ALPHA_J2000'], subtbl['DELTA_J2000'], sep=seeing)
 		if indx_targ != None:
 			mag, mager	= subtbl[indx_targ]['REAL_'+inmagkey], subtbl[indx_targ]['REAL_'+inmagerkey]
+			print('DETECTION!')
 		else:
 			mag, mager	= -99, -99
+			print('NON-DETECTION...')
 	#------------------------------------------------------------
 	#	CALC. DEPTH
 	#------------------------------------------------------------
@@ -217,7 +227,8 @@ obstbl		= ascii.read(path_obs+'/obs.txt')
 # tra, tdec = 185.733875, 15.826		#	SN2019ehk
 # tra, tdec = 258.3414923, -9.964393723	#	ZTF19aarykkb
 # tra, tdec = 262.7914654, -8.450713499	#	ZTF19aarzaod
-tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
+# tra, tdec = 44.54404167, -8.957944445	#	GRB190829A
+tra, tdec = 44.54382542, -8.9577325		#	GRB190829A (MORE ACCURATE)
 #------------------------------------------------------------
 #	IMAGES TO PHOTOMETRY
 #	INPUT FORMAT	: Calib-[OBS]-[TARGET]-[DATE]-[TIME]-[BAND]*.fits
@@ -229,21 +240,21 @@ imlist.sort()
 for img in imlist: print(img)
 
 photlist	= []
-# refcatname	= 'PS1'			#	(PS1/APASS/SDSS/2MASS)
-# refcatname	= 'SDSS'
-# refcatname	= 'APASS'
 refcatname	= '2MASS'
-# phottype	= 'normal'
+phottype	= 'normal'
 # phottype	= 'subt'		#	(normal/subt/depth)
-phottype	= 'depth'
+# phottype	= 'depth'
+# dual		= True
+dual		= False
 starttime	= time.time()
 #============================================================
 #	MAIN COMMAND
 #============================================================
 for inim in imlist:
 	try:
-		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype,
-							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_7',
+		plt.ioff()
+		param_phot	= dict(	inim=inim, refcatname=refcatname, phottype=phottype, dual=dual,
+							tra=tra, tdec=tdec, path_base='./', aperture='MAG_APER_1',
 							detsig=3.0, frac=0.9)
 		photlist.append(phot_routine(**param_phot))
 		# os.system('rm psf*.fits snap*.fits *.xml seg.fits')
@@ -262,3 +273,5 @@ else:
 	deltime		= time.time() - starttime
 	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
 os.system('rm snap*.fits psf-*.fits *aper.fits *.sub.fits *.bkg.fits')
+
+photbl['date-obs', 'mag', 'magerr']

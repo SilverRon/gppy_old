@@ -139,9 +139,11 @@ comlists	= []
 #------------------------------------------------------------
 for inim in imlist:
 	comlist	= []
-	jdbase	= fits.getheader(inim)['mjd']
+	# jdbase	= fits.getheader(inim)['mjd']
+	jdbase	= fits.getheader(inim)['jd']
 	for inim in imlist:
-		jd	= fits.getheader(inim)['mjd']
+		# jd	= fits.getheader(inim)['mjd']
+		jd	= fits.getheader(inim)['jd']
 		deljd	= np.abs(jd - jdbase)
 		if deljd < 30/1440.:				# x/1440 : within x min
 			#imlist.remove(inim)
