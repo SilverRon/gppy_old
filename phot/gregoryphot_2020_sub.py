@@ -151,14 +151,14 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = '2MASS'
 #------------------------------------------------------------
 # tra, tdec = 208.3714550, 40.2754194
-# tra, tdec = 185.7288542, 15.8236250			#	SN2020oi
-# tra, tdec = 161.6379008, 13.7418711			#	SN2018kp
-# tra, tdec = 44.5438520, -8.9577875			#	GRB 190829A
 # tra, tdec = 44.8599883, 31.3863268			#	G0037111
 # tra, tdec = 45.4286739, 31.8941469			#	G0232794
 # tra, tdec = 75.9126992, -23.7941181	#	UNKNOWN FOR GW190425
-# tra, tdec = 111.8296542, 80.2328528		#	2020ddy
-tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
+# tra, tdec = 185.7288542, 15.8236250			#	SN2020oi
+# tra, tdec = 161.6379008, 13.7418711			#	SN2018kp
+# tra, tdec = 44.5438520, -8.9577875			#	GRB 190829A
+tra, tdec = 111.8296542, 80.2328528		#	2020ddy
+# tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
@@ -230,8 +230,21 @@ if len(tblist) == 0:
 	print('PHOTOMETRY FAILED!')
 else:
 	photbl		= vstack(tblist)
-	if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
-		os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
+	# if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
+		# os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
+	#	phot.dat REPLACE
+	photlist = glob.glob('phot*.dat')
+
+	if 'phot.dat' in photlist:
+		photnumb = 0
+		phot_rpl = 'phot.{}.dat'.format(photnumb)
+		while phot_rpl in photlist:
+			photnumb += 1
+	
+		com = 'mv phot.dat {}'.format(phot_rpl)
+		print(com)
+		os.system(com)
+
 	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
 
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')

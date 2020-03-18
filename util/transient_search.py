@@ -232,7 +232,7 @@ frac = 0.9
 #	IMAGE SNAPSHOT (IMAGE SIZE/r)
 r = 25
 #------------------------------------------------------------
-imlist = glob.glob('caCalib-*.fits'); imlist.sort()
+imlist = glob.glob('Calib-*m.fits'); imlist.sort()
 failist = []
 for inim in imlist:
 	try:

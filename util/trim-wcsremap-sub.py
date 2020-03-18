@@ -56,12 +56,12 @@ def hotpants(inim, refim):
 # tra, tdec, length = 2.4604205, 33.3074615, 30		#	G0002650 FOR LOAO
 # tra, tdec, length = 15.7359666, 51.3422759, 10	#	G0008283
 # tra, tdec, length = 14.6530454, 51.6189949, 10	#	G0189676
-tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
 # tra, tdec, length = 75.9126992, -23.7941181, 10	#	UNKNOWN FOR GW190425
-# tra, tdec, length = 44.5440417, -8.9579444, 20	#	GRB 190829A
 # tra, tdec, length = 170.083333, +12.990278, 20	#	2020cwh
 # tra, tdec, length = 170.1247667, 26.95351111, 10	#	2020dbf
-# tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
+# tra, tdec, length = 44.5440417, -8.9579444, 20	#	GRB 190829A
+# tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
+tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 #	arcmin
@@ -85,7 +85,9 @@ for inim in imlist:
 	trrefim = 'tr'+refim
 
 	wrim = tool.wcsremap(trrefim, trinim)		#	MATCH REF. TO TARGET IMAGE
-	hotpants(trinim, 'Ref'+trinim)
+	hotpants(trinim, wrim)
 
-	ds9com = 'ds9 {} {} {} -lock frame wcs -tile column &'.format(trinim, 'Ref'+trinim, 'hd'+trinim)
+	ds9com = 'ds9 {} {} {} -lock frame wcs -tile column &'.format(trinim, wrim, 'hd'+trinim)
 	# os.system(ds9com)
+	cleancom = 'rm hc*.fits *seg.fits'
+	os.system(cleancom)

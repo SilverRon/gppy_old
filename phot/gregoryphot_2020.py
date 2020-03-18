@@ -182,7 +182,7 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						DETECT_MINAREA = '5',
 						DETECT_THRESH = '1.5',
 						DEBLEND_NTHRESH = '64',
-						DEBLEND_MINCONT = '0.0001',
+						DEBLEND_MINCONT = '0.00001',
 						#------------------------------
 						#	PHOTOMETRY
 						#------------------------------
@@ -319,8 +319,9 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	if phottype == 'normal':
 		intbl['REAL_'+inmagkey] = zp + intbl[inmagkey]
 		intbl['REAL_'+inmagerkey] = phot.sqsum(zper, intbl[inmagerkey])
-		print(indx_targ)
 		indx_targ = phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=seeing)
+		print(indx_targ)
+		print(intbl['X_IMAGE'][indx_targ], intbl['Y_IMAGE'][indx_targ])
 		if indx_targ != None:
 			mag, mager	= intbl[indx_targ]['REAL_'+inmagkey], intbl[indx_targ]['REAL_'+inmagerkey]
 			radeg, dedeg = np.asscalar(intbl['ALPHA_J2000'][indx_targ]), np.asscalar(intbl['DELTA_J2000'][indx_targ])
@@ -436,6 +437,8 @@ inmagerkey = 'MAGERR_APER'
 refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 17.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 0, 16.0			#	REF MAG RANGE [MAG]
+# refmagerupper = 0.1
 refmagerupper = 0.05
 inmagerupper = 0.05
 #------------------------------------------------------------
@@ -450,8 +453,8 @@ phottype = 'depth'
 #------------------------------------------------------------
 # aperture = str(input('aperture:'))			#	DIAMETER
 # apertures = np.arange(1, 15.0, 0.5)
-# apertures = np.arange(1, 17.0, 0.5)			#	LOAO
-apertures = np.arange(5, 35.0, 1.0)			#	SOAO
+apertures = np.arange(1, 17.0, 0.5)			#	LOAO
+# apertures = np.arange(5, 35.0, 1.0)			#	SOAO
 aper_input = ''
 for i in apertures:
 	aper_input = aper_input+'{},'.format(i)
@@ -504,8 +507,8 @@ for i, inim in enumerate(imlist):
 	except:
 		pass
 	'''
-	# os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
-	os.system('rm psf*.fits snap*.fits *.xml *sub.fits *.aper.fits *.bkg.fits *.seg.fits')
+	os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
+	# os.system('rm psf*.fits snap*.fits *.xml *sub.fits *.aper.fits *.bkg.fits *.seg.fits')
 #------------------------------------------------------------
 #	FINISH
 #------------------------------------------------------------
@@ -513,8 +516,21 @@ if len(tblist) == 0:
 	print('PHOTOMETRY FAILED!')
 else:
 	photbl		= vstack(tblist)
-	if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
-		os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
+	# if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
+		# os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
+	#	phot.dat REPLACE
+	photlist = glob.glob('phot*.dat')
+
+	if 'phot.dat' in photlist:
+		photnumb = 0
+		phot_rpl = 'phot.{}.dat'.format(photnumb)
+		while phot_rpl in photlist:
+			photnumb += 1
+	
+		com = 'mv phot.dat {}'.format(phot_rpl)
+		print(com)
+		os.system(com)
+
 	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
 
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')

@@ -93,7 +93,7 @@ def downimage_routine(name, ra, dec, size, output_size, filters, format, save_di
 	url			= geturl(**param_geturl)
 	fh		= fits.open(url[0])
 	# newname	= 'Ref'+'-PS1-'+name+'-'+filt+'.fits'
-	newname = 'Calib-PS1-{}-00000000-000000-r-0.fits'.format(name)
+	newname = 'Calib-PS1-{}-00000000-000000-{}-0.fits'.format(name, filters)
 	os.system('mkdir '+save_dir+filt+'/')
 	fh.writeto(save_dir+filt+'/'+newname, overwrite=True)
 	pan, panhd	= fits.getdata(save_dir+filt+'/'+newname, header=True)
@@ -101,6 +101,8 @@ def downimage_routine(name, ra, dec, size, output_size, filters, format, save_di
 	fits.writeto(save_dir+filt+'/'+newname, pan0, panhd, overwrite=True)
 #------------------------------------------------------------
 #	SAMPLE LINES FOR DOWNLOADING SINGLE IMAGE FROM PS1
+
+'''
 param_down	= dict(  name = input('NAME\t: '),
 					ra = float(input('RA [deg]\t: ')),
 					dec = float(input('Dec [deg]\t: ')),
@@ -108,6 +110,16 @@ param_down	= dict(  name = input('NAME\t: '),
 					filters = input('Filter (u/g/r/i/z)\t: '),
 					output_size = None,
 					format = 'fits')
+'''
+param_down	= dict(  name = 'GRB200306C',
+					ra = 198.5556250,
+					dec = 11.2698056,
+					size = 6000,
+					filters = 'i',
+					output_size = None,
+					format = 'fits')
+
+
 try:
 	downimage_routine(**param_down)
 except:
