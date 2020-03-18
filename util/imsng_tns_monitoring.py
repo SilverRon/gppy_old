@@ -199,6 +199,7 @@ outname = 'IMSNG-TNS-{}.dat'.format(getCurrentStrTime())
 #------------------------------------------------------------
 path_obs = '/home/sonic/Research/table/obs.txt'
 path_input = '/home/sonic/Research/table/imsng-alltarget.dat'
+path_key = '/home/Research/table/keys.dat'
 path_save = '/data1/IMSNG'
 refcats = glob.glob('/data1/IMSNG/IMSNG-TNS*.dat')
 refcats.sort()
@@ -207,6 +208,7 @@ path_ref = refcats[-1]
 obstbl = ascii.read(path_obs)
 reftbl = ascii.read(path_ref)
 intbl = ascii.read(path_input)
+keytbl = ascii.read(path_key)
 #------------------------------------------------------------
 radius = 15
 units = 'arcmin'
@@ -288,8 +290,8 @@ else:
 	# contents= 'CONTENTS'
 	import codecs
 	contents= codecs.open(path_save+'/NEW-'+outname, 'rb', 'utf-8')
-	fromID	= 'ceouobs@gmail.com'
-	fromPW	= 'ceou@snu'
+	indx = np.where(keytbl['name']=='ceouobs')
+	fromID, fromPW = keytbl['key'][indx].item(), keytbl['pw'][indx].item()
 	toIDs	= ''
 	for address in reciver['address']: toIDs += address+','
 	toIDs	= toIDs[:-1]
