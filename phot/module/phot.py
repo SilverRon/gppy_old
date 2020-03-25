@@ -523,7 +523,7 @@ def sdss_Blaton(intbl, name):
 	outtbl	= Table([name, ra, de, u, uer, g, ger, r, rer, i, ier, z, zer, B, Ber, V, Ver, R, Rer, I, Ier, clean], names=['name', 'ra', 'dec', 'u', 'uerr', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'z', 'zerr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr', 'clean'])
 	
 	outtbl0	= Table([name, ra, de, u, uer, g, ger, r, rer, i, ier, z, zer, B, Ber, V, Ver, R, Rer, I, Ier, clean], names=['#name', 'ra', 'dec', 'u', 'uerr', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'z', 'zerr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr', 'clean'])
-	ascii.write(outtbl0, outfile)#, format='fixed_width', delimiter=' ')
+	ascii.write(outtbl0, outfile, overwrite=True)#, format='fixed_width', delimiter=' ')
 	return outtbl, outfile
 #-------------------------------------------------------------------------#
 def apass_Blaton(intbl, name):
@@ -584,7 +584,7 @@ def apass_Blaton(intbl, name):
 	outtbl	= Table([name, ra, de, Numb_obs, Numb_img, g, ger, r, rer, i, ier, B, Ber, V, Ver, R, Rer], names=['name', 'ra', 'dec', 'numb_obs', 'numb_img', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr'])
 	
 	outtbl0 = Table([name, ra, de, Numb_obs, Numb_img, g, ger, r, rer, i, ier, B, Ber, V, Ver, R, Rer], names=['#name', 'ra', 'dec', 'numb_obs', 'numb_img', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr'])
-	ascii.write(outtbl0, outfile)#, format='fixed_width', delimiter=' ')
+	ascii.write(outtbl0, outfile, overwrite=True)#, format='fixed_width', delimiter=' ')
 	return outtbl, outfile
 #-------------------------------------------------------------------------#
 def apass_Lupton(intbl, name):
@@ -649,7 +649,7 @@ def apass_Lupton(intbl, name):
 	outtbl	= Table([name, ra, de, Numb_obs, Numb_img, g, ger, r, rer, i, ier, B, Ber, V, Ver, R2AB, Rer, I2AB, Ier], names=['name', 'ra', 'dec', 'numb_obs', 'numb_img', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr'])
 	
 	outtbl0 = Table([name, ra, de, Numb_obs, Numb_img, g, ger, r, rer, i, ier, B, Ber, V, Ver, R2AB, Rer, I2AB, Ier], names=['#name', 'ra', 'dec', 'numb_obs', 'numb_img', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr'])
-	ascii.write(outtbl0, outfile)#, format='fixed_width', delimiter=' ')
+	ascii.write(outtbl0, outfile, overwrite=True)#, format='fixed_width', delimiter=' ')
 	return outtbl, outfile
 #-------------------------------------------------------------------------#
 def ps1_Tonry(intbl, name):
@@ -718,7 +718,7 @@ def ps1_Tonry(intbl, name):
 	Ier		= sqsum( Isig, sqsum(B1*grer, intbl['e_imag']) )
 	outtbl	= Table([name, ra, de, g, ger, r, rer, i, ier, z, zer, y, yer, B, Ber, V, Ver, R, Rer, I, Ier, Q], names=['name', 'ra', 'dec', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'z', 'zerr', 'y', 'yerr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr', 'Q'])
 	outtbl0	= Table([name, ra, de, g, ger, r, rer, i, ier, z, zer, y, yer, B, Ber, V, Ver, R, Rer, I, Ier, Q], names=['#name', 'ra', 'dec', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr', 'z', 'zerr', 'y', 'yerr', 'B', 'Berr', 'V', 'Verr', 'R', 'Rerr', 'I', 'Ierr', 'Q'])
-	ascii.write(outtbl0, outfile)#, format='fixed_width', delimiter=' ')
+	ascii.write(outtbl0, outfile, overwrite=True)#, format='fixed_width', delimiter=' ')
 	return outtbl, outfile
 #-------------------------------------------------------------------------#
 def psfexxml(xmlfile):

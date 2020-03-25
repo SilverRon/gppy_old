@@ -425,9 +425,9 @@ path_base = './'
 radius = 1.0								#	[DEGREE]
 frac = 1.0									#	IMAGE FRACTION [%]
 # frac = 0.8
-refcatname = 'PS1'							#	REFERENCE CATALOG
+# refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = 'APASS'
-# refcatname = 'SDSS'
+refcatname = 'SDSS'
 # refcatname = '2MASS'
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'

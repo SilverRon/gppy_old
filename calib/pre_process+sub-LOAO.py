@@ -1,12 +1,17 @@
+#!/home/paek/anaconda2/bin/python2.7
 #============================================================
-#   CALIBTRATION ROUTINE FOR IMSNG TELESCOPES
-#	LOAO, DOAO, SOAO, ...
-#   18.12.04	UPDATED BY Gregory S.H. Paek
-#	19.08.08	UPDATED BY Gregory S.H. Paek	
+#   1. FILE CHECK, whether new folder was updated.
+#   2. pre-processing + log file
+#   3. moving
+#   4. combine and subtraction (not yet)
+#   18.12.04 add something by G.Paek
 #============================================================
 import os, sys, glob
 import numpy as np
 import astropy.io.ascii as ascii
+import warnings
+# from __future__ import print_function
+warnings.filterwarnings(action='ignore')
 obs         = 'LOAO'
 path_calib  = '/data3/paek/factory/calib/'
 path_factory= '/data3/paek/factory/'
@@ -28,14 +33,15 @@ def gregistering(images_to_align, ref_image):
 	from multiprocessing import Process, Pool
 	import multiprocessing as mp
 	import time
+	# from __future__ import print_function
 	starttime	= time.time()
 	if ref_image == '': ref_image = images_to_align[0]
 	identifications = alipy.ident.run(ref_image, images_to_align, visu=False)
-	for id in identifications: # list of the same length as images_to_align.
-		if id.ok == True: # i.e., if it worked
-			print "%20s : %20s, flux ratio %.2f" % (id.ukn.name, id.trans, id.medfluxratio)
-		else:
-			print "%20s : no transformation found !" % (id.ukn.name)
+	# for id in identifications: # list of the same length as images_to_align.
+		# if id.ok == True: # i.e., if it worked
+			# print "%20s : %20s, flux ratio %.2f" % (id.ukn.name, id.trans, id.medfluxratio)
+		# else:
+			# print "%20s : no transformation found !" % (id.ukn.name)
 	outputshape = alipy.align.shape(ref_image)
 	for id in identifications:
 		if id.ok == True:
@@ -120,7 +126,6 @@ C5		'DATE-OBS'+'T'+'UT'			30inch
 
 ###     DIRECTORY TO PROCESS
 def call_images(path_folder):
-	from msumastro import ImageFileCollection
 	images          = ImageFileCollection(path_folder, keywords='*')
 	return images
 ###     OBSERVATORY
@@ -281,7 +286,8 @@ def putMJD(inim, case):
 		datetimestr=hdr['DATE-OBS']+'T'+hdr['UT']
 		mjdval = Time(datetimestr,format='isot',scale='utc').mjd
 		fits.setval(inim,'MJD',value=mjdval,comment='MJD appended')	
-	else : print 'Not in known cases.'
+	else :
+		print('Not in known cases.')
 	comment     = inim+'\t'+': '+'Header Updated to '+str(fits.getheader(inim)['MJD'])+'\t'+'[MJD]'
 	#print(comment)
 #------------------------------------------------------------------------------#
@@ -383,9 +389,12 @@ for path in new_LOAO:
 	obj_list= []
 	fil_list= []
 	for hdu, fname in images.hdus(imagetyp='Light', return_fname=True):
-		meta= hdu.header
-		fil_list.append(meta['FILTER'])
-		obj_list.append(meta['OBJECT'])
+		try:
+			meta= hdu.header
+			fil_list.append(meta['FILTER'])
+			obj_list.append(meta['OBJECT'])
+		except:
+			print(fname)
 	obj_list= list(set(obj_list))
 	fil_list= list(set(fil_list))
 	#------------------------------------------------------------------------------#
@@ -477,9 +486,48 @@ for path in new_LOAO:
 	comment = 'REDUCTION DONE\t['+str(order)+'/'+str(len(new_LOAO))+'] : '+path+'\n' \
 			+ '='*80+'\n'
 	print(comment)
-	if len(new_LOAO) != 0: move_calib(obs, path_calib, path_gal)
+	# if len(new_LOAO) != 0: move_calib(obs, path_calib, path_gal)
 
 	os.system('rm -rf '+new+'/')
 #------------------------------------------------------------------------------#
 ### REMOVE UNNESSARY FILES AND MOVE CALIBRATED FILES
 ##  LIST FOR CALIB IMAGES
+
+'''
+import os, sys, glob
+path_calib = '/data3/paek/factory/calib'
+imlist = glob.glob(path_calib+'/*Calib*.fits')
+path_base = '/data3/IMSNG/IMSNGgalaxies'
+objlist = []
+for inim in imlist:
+    part = inim.split('-')
+    obj = part[2]
+    objlist.append(obj)
+
+objs = list(set(objlist))
+
+os.system('cp {}/hd*.fits {}/sub/'.format(path_calib, path_calib))
+
+for obj in objlist:
+	# for obs in ['SOAO', 'DOAO', 'LOAO']:
+	for obs in ['LOAO']:
+		# com = 'mv *'+obs+'*'+obj+'*.fits '+path_base+'/'+obj+'/'+obs+'/'
+		com = 'mv {}/*{}*{}*.fits {}/{}/{}/'.format(path_calib, obs, obj, path_base, obj, obs)
+        print(com);os.system(com)
+'''
+
+path_calib = '/data3/paek/factory/calib'
+path_base = '/data3/IMSNG/IMSNGgalaxies'
+imlist = glob.glob(path_calib+'/*Calib*.fits'); imlist.sort()
+
+for inim in imlist:
+	part = inim.split('-')
+	obs = part[1]
+	obj = part[2]
+	filte = part[5]
+
+	path_save = '{}/{}/{}/{}'.format(path_base, obj, obs, filte)
+	mvcom = 'mv {} {}'.format(inim, path_save)
+
+	os.system('mkdir {}'.format(path_save))
+	os.system(mvcom)

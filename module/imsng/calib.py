@@ -8,6 +8,8 @@
 #============================================================
 import os, glob
 import numpy as np
+from astropy import units as u
+
 def folder_check(datalist, path_raw, path_factory):
 	'''
 	CHECK NEW OBSERVATION DATA FOLDER
@@ -49,18 +51,22 @@ def correcthdr_routine(path_data, hdrtbl):
 			+ '-'*60+'\n'
 	print(comment)
 	objfilterlist = []
+	objexptimelist = []
 	flatfilterlist = []
+	darkexptimelist = []
 	for inim in glob.glob(path_data+'/*.fits'):
 		data, hdr   = fits.getdata(inim, header=True)
 		#	CHECK IMAGETYP HDR
 		if hdr['IMAGETYP'] == 'Light': hdr['IMAGETYP'] = 'object'
+		if hdr['IMAGETYP'] == 'zero' : hdr['IMAGETYP'] = 'Bias'
+		if hdr['IMAGETYP'] == 'Dark' : hdr['IMAGETYP'] = 'dark'
 		#	CHECK FILTER HDR
 		if ((hdr['FILTER'] == 'U101') | (hdr['FILTER'] == 1)): hdr['FILTER'] = 'U'
 		if ((hdr['FILTER'] == 'B102') | (hdr['FILTER'] == 2)): hdr['FILTER'] = 'B'
 		if ((hdr['FILTER'] == 'V103') | (hdr['FILTER'] == 3)): hdr['FILTER'] = 'V'
 		if ((hdr['FILTER'] == 'R104') | (hdr['FILTER'] == 4)): hdr['FILTER'] = 'R'
 		if ((hdr['FILTER'] == 'I105') | (hdr['FILTER'] == 5)): hdr['FILTER'] = 'I'
-		if hdr['FILTER'] == '0':
+		if (hdr['FILTER'] == '0') | (hdr['FILTER'] == 0):
 			hdr['FILTER'] = 'R'
 			print('PLEASE CHECK SOAO FILTER HDR (FILTER:0?)')
 		#	CHECK DATE-OBS
@@ -87,12 +93,17 @@ def correcthdr_routine(path_data, hdrtbl):
 		fits.writeto(inim, data, hdr, overwrite=True)
 		if hdr['IMAGETYP'] == 'object':
 			objfilterlist.append(hdr['FILTER'])
+			objexptimelist.append(hdr['EXPTIME'])
 		if hdr['IMAGETYP'].upper() == 'FLAT':
 			flatfilterlist.append(hdr['FILTER'])
+		if hdr['IMAGETYP'].upper() == 'DARK':
+			darkexptimelist.append(hdr['EXPTIME'])
 	#	OBJECT FILTER, FLAT FILTER
-	objfilterlist = list(set(objfilterlist))
-	flatfilterlist = list(set(flatfilterlist))
-	return objfilterlist, flatfilterlist, t
+	objfilterlist = list(set(objfilterlist));		objfilterlist.sort()
+	objexptimelist = list(set(objexptimelist));		objexptimelist.sort()
+	flatfilterlist = list(set(flatfilterlist));		flatfilterlist.sort()
+	darkexptimelist = list(set(darkexptimelist));	darkexptimelist.sort()
+	return objfilterlist, objexptimelist, flatfilterlist, darkexptimelist, t
 #------------------------------------------------------------
 def isot_to_mjd(time):      # 20181026 to 2018-10-26T00:00:00:000 to MJD form
 	from astropy.time import Time
@@ -165,7 +176,49 @@ def master_zero(images, fig=False):
 		plt.savefig(path_data+'/zero.png')
 	return mzero
 #------------------------------------------------------------
-def master_flat(images, mzero, filte, fig=False):
+def master_dark(images, mzero, exptime, fig=False):
+	import ccdproc
+	import os
+	from astropy.nddata import CCDData
+	import matplotlib.pyplot as plt
+	comment     = '-'*60+'\n' \
+				+ 'MAKING MASTER DARK\n' \
+				+ '-'*60+'\n'
+	print(comment)
+	path_data = images.location
+	mdark_name = 'dark-{}.fits'.format(int(exptime))
+	#	HEADER FOR MASTER FRAME
+	zdarklist   = []
+	for hdu, fname in images.hdus(imagetyp='dark', exptime=exptime, return_fname=True):
+		meta = hdu.header
+		dark = ccdproc.CCDData(data=hdu.data, meta=meta, unit="adu")
+		zdark = ccdproc.subtract_bias(dark, mzero)
+		zdark.meta['SUBBIAS'] = mzero.meta['FILENAME']
+		zdarklist.append(ccdproc.CCDData(data=zdark.data, meta=meta, unit="adu"))
+	#	HEADER FOR MASTER FRAME
+	n = 0
+	for hdu, fname in images.hdus(imagetyp='dark', return_fname=True):	
+		n += 1
+		newmeta = meta
+		newmeta['FILENAME'] = mdark_name
+		newmeta['COMB{}'.format(n)] = fname
+	# print('{} DARK({} sec) IMAGES WILL BE COMBINED.'.format(len(zdarklist)), exptime)
+	darks = ccdproc.Combiner(zdarklist)
+	mdark = darks.median_combine()
+	mdark.header  = newmeta
+	#	SAVE MASTER FRAME
+	if '{}/{}'.format(path_data, mdark_name) in glob.glob(path_data+'/*'):
+		os.system('rm {}/{}'.format(path_data, mdark_name))
+	mdark.write('{}/{}'.format(path_data, mdark_name))
+	if fig != False:
+		imstats = lambda dat: (dat.min(), dat.max(), dat.mean(), dat.std())
+		zero_min, zero_max, zero_mean, zero_std = imstats(np.asarray(mzero))
+		plt.figure(figsize=(15, 15))
+		plt.imshow(mzero, vmax=zero_mean + 4*zero_std, vmin=zero_mean - 4*zero_std)
+		plt.savefig(path_data+'/zero.png')
+	return mdark
+#------------------------------------------------------------
+def master_flat(images, mzero, filte, mdark=False, fig=False):
 	import os
 	import ccdproc
 	from astropy.nddata import CCDData
@@ -175,16 +228,35 @@ def master_flat(images, mzero, filte, fig=False):
 				+ '-'*60+'\n'
 	print(comment)
 	path_data = images.location
-	#	FLAT - MZERO = zFLAT
-	print('SUBTRACT MASTER ZERO FROM {} FLAT'.format(filte))
-	outname = 'n'+filte+'.fits'
-	zflatlist = []
-	for hdu, fname in images.hdus(imagetyp='flat', filter=filte, return_fname=True):
-		meta = hdu.header
-		flat = ccdproc.CCDData(data=hdu.data, meta=meta, unit="adu")
-		zflat = ccdproc.subtract_bias(flat, mzero)
-		zflat.meta['SUBBIAS'] = mzero.meta['FILENAME']
-		zflatlist.append(ccdproc.CCDData(data=zflat.data, meta=meta, unit="adu"))
+	if mdark == False:
+		#	FLAT - MZERO = zFLAT
+		print('SUBTRACT MASTER ZERO FROM {} FLAT'.format(filte))
+		outname = 'n'+filte+'.fits'
+		zflatlist = []
+		for hdu, fname in images.hdus(imagetyp='flat', filter=filte, return_fname=True):
+			meta = hdu.header
+			flat = ccdproc.CCDData(data=hdu.data, meta=meta, unit="adu")
+			zflat = ccdproc.subtract_bias(flat, mzero)
+			zflat.meta['SUBBIAS'] = mzero.meta['FILENAME']
+			zflatlist.append(ccdproc.CCDData(data=zflat.data, meta=meta, unit="adu"))
+	else:
+		#	FLAT - MZERO = zFLAT
+		print('SUBTRACT MASTER ZERO & DARK FROM {} FLAT'.format(filte))
+		outname = 'n'+filte+'.fits'
+		zflatlist = []
+		for hdu, fname in images.hdus(imagetyp='flat', filter=filte, return_fname=True):
+			meta = hdu.header
+			flat = ccdproc.CCDData(data=hdu.data, meta=meta, unit="adu")
+			zflat = ccdproc.subtract_bias(flat, mzero)
+			dzflat = ccdproc.subtract_dark(	ccd=zflat, master=mdark,
+											# data_exposure=zflat.meta['EXPTIME'],
+											exposure_time='EXPTIME',
+											exposure_unit=u.second,
+											# dark_exposure=mdark.meta['EXPTIME'],
+											scale=True)
+			meta['SUBBIAS'] = mzero.meta['FILENAME']
+			meta['SUBDARK'] = mdark.meta['FILENAME']
+			zflatlist.append(ccdproc.CCDData(data=dzflat.data, meta=meta, unit="adu"))
 	#	HEADER FOR MASTER FRAME
 	newmeta = meta
 	newmeta['FILENAME'] = outname
@@ -211,9 +283,10 @@ def master_flat(images, mzero, filte, fig=False):
 		plt.figure(figsize=(15, 15))
 		plt.imshow(mflat, vmin=f_mean-5*f_std, vmax=f_mean+5*f_std)
 		plt.savefig(path_data+'/'+outname[:-5]+'.png')
+
 	return mflat
 #------------------------------------------------------------
-def calibration(images, mzero, mflat, filte):
+def calibration(images, mzero, mflat, filte, mdark=False):
 	import ccdproc
 	comment     = '-'*60+'\n' \
 				+ 'OBJECT CORRECTION\n' \
@@ -225,9 +298,21 @@ def calibration(images, mzero, mflat, filte):
 		meta = hdu.header
 		objlist.append(meta['object'])
 		obj = ccdproc.CCDData(data=hdu.data, meta=meta, unit="adu")
-		#	ZERO CORRECTION
-		zobj = ccdproc.subtract_bias(obj, mzero)
-		meta['SUBBIAS'] = mzero.meta['FILENAME']
+		if mdark == False:
+			#	ZERO CORRECTION
+			zobj = ccdproc.subtract_bias(obj, mzero)
+			meta['SUBBIAS'] = mzero.meta['FILENAME']
+		else:
+			#	ZERO & DARK CORRECTION
+			zobj = ccdproc.subtract_bias(obj, mzero)
+			meta['SUBBIAS'] = mzero.meta['FILENAME']
+			zobj = ccdproc.subtract_dark(	ccd=zobj, master=mdark,
+											# dark_exposure=mdark.meta['EXPTIME'],
+											# data_exposure=dzobj.meta['EXPTIME'],
+											exposure_time='EXPTIME',
+											exposure_unit=u.second,
+											scale=True)
+			meta['SUBDARK'] = mdark.meta['FILENAME']
 		#	FLAT CORRECTION
 		fzobj = ccdproc.flat_correct(zobj, mflat)
 		meta['DIVFLAT'] = mflat.meta['FILENAME']
@@ -235,15 +320,43 @@ def calibration(images, mzero, mflat, filte):
 		# fzobj.write(path_data+'/fz'+fname)
 		fzobj.write('{}/fz{}'.format(path_data, fname), overwrite=True)
 #------------------------------------------------------------
-def astrometry(inim, pixscale):
+'''
+def astrometry(path_data, pixscale):
 	import os
+	order = 0
+	imlist = glob.glob(path_data+'/fz*.fits')
 	upscl = str(pixscale + pixscale*0.05)
 	loscl = str(pixscale - pixscale*0.05)
+	comment = '='*60+'\n' \
+			+ 'ASTROMETRY PROCESS START\t'+str(len(imlist))+' IMAGES'
+	print(comment)
+	for inim in imlist:
+		order += 1
+		inim = inim.split('/')[-1]
+		outname = path_data+'/a'+inim
+		com     ='solve-field '+inim \
+				+' --scale-unit arcsecperpix --scale-low '+loscl+' --scale-high '+upscl \
+				+' --no-plots --new-fits '+outname+' --overwrite --use-sextractor --cpulimit 1800\n'
+		os.system(com)
+		comment = '-'*60+'\n' \
+				+ 'ASTROMETRY PROCESS\t'+str(round(order*100/len(imlist)))+'%\t'\
+				+ '['+str(order)+'/'+str(len(imlist))+']'+'\n'
+		print(comment)
+	os.system('rm '+path_data+'/*.axy '+path_data+'/*.corr '+path_data+'/*.xyls '+path_data+'/*.match '+path_data+'/*.rdls '+path_data+'/*.solved '+path_data+'/*.wcs ')
+	print('COMPLETE\n'+'='*60)
+'''
+#------------------------------------------------------------
+
+def astrometry(inim, pixscale):
+	import os
+	upscl = str(pixscale + pixscale*0.10)
+	loscl = str(pixscale - pixscale*0.10)
 	outname = os.path.dirname(inim)+'/a'+os.path.basename(inim)
 	com     ='solve-field '+inim \
 			+' --scale-unit arcsecperpix --scale-low '+loscl+' --scale-high '+upscl \
-			+' --no-plots --new-fits '+outname+' --overwrite --use-sextractor\n'
+			+' --no-plots --new-fits '+outname+' --overwrite --use-sextractor --cpulimit 600\n'
 	print(com); os.system(com)
+
 #------------------------------------------------------------
 def fnamechange(inim, obs):
 	import os
