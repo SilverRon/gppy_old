@@ -425,9 +425,9 @@ path_base = './'
 radius = 1.0								#	[DEGREE]
 frac = 1.0									#	IMAGE FRACTION [%]
 # frac = 0.8
-# refcatname = 'PS1'							#	REFERENCE CATALOG
+refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = 'APASS'
-refcatname = 'SDSS'
+# refcatname = 'SDSS'
 # refcatname = '2MASS'
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
@@ -435,11 +435,11 @@ inmagerkey = 'MAGERR_APER'
 # refmaglower, refmagupper = 12, 17			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 14, 17			#	REF MAG RANGE [MAG]
 refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
-# refmaglower, refmagupper = 0, 17.5			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 12, 17.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.0			#	REF MAG RANGE [MAG]
 # refmagerupper = 0.1
-refmagerupper = 0.05
+refmagerupper = 0.02
 inmagerupper = 0.05
 #------------------------------------------------------------
 # tra, tdec = 208.3714550, 40.2754194
@@ -518,19 +518,20 @@ else:
 	photbl		= vstack(tblist)
 	# if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
 		# os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
+	'''
 	#	phot.dat REPLACE
 	photlist = glob.glob('phot*.dat')
 
 	if 'phot.dat' in photlist:
 		photnumb = 0
 		phot_rpl = 'phot.{}.dat'.format(photnumb)
-		while phot_rpl in photlist:
+		while phot_rpl not in photlist:
 			photnumb += 1
-	
+		
 		com = 'mv phot.dat {}'.format(phot_rpl)
 		print(com)
 		os.system(com)
-
+	'''
 	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
 
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')

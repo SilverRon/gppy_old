@@ -166,7 +166,7 @@ def querybox(refcatname, obj, racent, decent, path_refcat, radius=0.5, refmagkey
 	#------------------------------------------------------------
 	elif refcatname == 'APASS':
 		if path_refcat+'/apass-'+obj+'.cat' not in refcatlist:
-			querytbl = phot.apass_query(obj, racent, decent, path_refcat)
+			querytbl = phot.apass_query(obj, racent, decent, path_refcat, radius=radius)
 		else:
 			querytbl = ascii.read(path_refcat+'/apass-'+obj+'.cat')
 		reftbl, refcat = phot.apass_Blaton(querytbl, obj)

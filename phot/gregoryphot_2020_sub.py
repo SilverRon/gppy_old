@@ -238,7 +238,7 @@ else:
 	if 'phot.dat' in photlist:
 		photnumb = 0
 		phot_rpl = 'phot.{}.dat'.format(photnumb)
-		while phot_rpl in photlist:
+		while phot_rpl in glob.glob('phot*.dat'):
 			photnumb += 1
 	
 		com = 'mv phot.dat {}'.format(phot_rpl)

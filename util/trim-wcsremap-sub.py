@@ -60,7 +60,7 @@ def hotpants(inim, refim):
 # tra, tdec, length = 170.083333, +12.990278, 20	#	2020cwh
 # tra, tdec, length = 170.1247667, 26.95351111, 10	#	2020dbf
 # tra, tdec, length = 44.5440417, -8.9579444, 20	#	GRB 190829A
-# tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
+# tra, tdec, length = 185.7288542, 15.8236250, 10	#	SN 2020oi
 tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
