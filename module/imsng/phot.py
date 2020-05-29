@@ -927,7 +927,7 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 '''
 def star4zp(intbl, inmagerkey, refmagkey, refmagerkey, 
 	refmaglower=14., refmagupper=17., refmagerupper=0.05,
-	inmagerupper=0.1, verbose=False, plot=False, plotout='zphist.png'):
+	inmagerupper=0.1, flagcut=0, verbose=False, plot=False, plotout='zphist.png'):
 	"""
 	SELECT STARS FOR USING ZEROPOINT CALCULATION
 	INPUT   :   TABLE, IMAGE MAG.ERR KEYWORD, REF.MAG. KEYWORD, REF.MAG.ERR KEYWORD
@@ -935,13 +935,13 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 	"""
 	import numpy as np
 
-	indx_flag = np.where( intbl['FLAGS'] == 0 )
+	indx_flag = np.where( intbl['FLAGS'] <= flagcut )
 	indx_refmag = np.where(	(intbl[refmagkey] <= refmagupper) &
 							(intbl[refmagkey] >= refmaglower))
 	indx_refmager = np.where( intbl[refmagerkey] <= refmagerupper )
 	indx_mager = np.where( intbl[inmagerkey] <= inmagerupper )
 
-	indx_all = np.where((intbl['FLAGS'] == 0) & 
+	indx_all = np.where((intbl['FLAGS'] <= flagcut) & 
 						(intbl[refmagkey] < refmagupper) & 
 						(intbl[refmagkey] > refmaglower) & 
 						(intbl[refmagerkey] < refmagerupper) &
@@ -951,7 +951,7 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 	comment = '-'*50+'\n' \
 			+ 'ALL\t\t\t\t: {}\n'.format(len(intbl)) \
 			+ '-'*50+'\n' \
-			+ 'FLAG(=0)\t\t\t: {}\n'.format(len(indx_flag[0])) \
+			+ 'FLAG(<={})\t\t\t: {}\n'.format(flagcut, len(indx_flag[0])) \
 			+ '{} REF. MAGCUT ({}-{})\t\t: {}\n'.format(refmagkey, refmaglower, refmagupper, len(indx_refmag[0])) \
 			+ '{} REF. MAGERR CUT < {}\t: {}\n'.format(refmagerkey, refmagerupper, len(indx_refmager[0])) \
 			+ '{} CUT < {}\t\t: {}\n'.format(inmagerkey, inmagerupper, len(indx_mager[0])) \

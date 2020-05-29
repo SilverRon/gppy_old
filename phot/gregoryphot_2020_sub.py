@@ -157,8 +157,9 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 # tra, tdec = 185.7288542, 15.8236250			#	SN2020oi
 # tra, tdec = 161.6379008, 13.7418711			#	SN2018kp
 # tra, tdec = 44.5438520, -8.9577875			#	GRB 190829A
-tra, tdec = 111.8296542, 80.2328528		#	2020ddy
+# tra, tdec = 111.8296542, 80.2328528		#	2020ddy
 # tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
+tra, tdec, length = 185.4603292, 4.481705551, 5		#	2020jfo
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'

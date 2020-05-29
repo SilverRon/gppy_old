@@ -766,20 +766,20 @@ def matching(intbl, reftbl, inra, indec, refra, refdec, sep=2.0):
 #-------------------------------------------------------------------------#
 def star4zp(intbl, inmagerkey, refmagkey, refmagerkey, 
 			refmaglower=14., refmagupper=17., refmagerupper=0.05,
-			inmagerupper=0.1):
+			inmagerupper=0.1, flagcut=0):
 	"""
 	SELECT STARS FOR USING ZEROPOINT CALCULATION
 	INPUT   :   TABLE, IMAGE MAG.ERR KEYWORD, REF.MAG. KEYWORD, REF.MAG.ERR KEYWORD
 	OUTPUT  :   NEW TABLE
 	"""
 	import numpy as np
-	indx    = np.where( (intbl['FLAGS'] == 0) & 
+	indx    = np.where( (intbl['FLAGS'] <= flagcut) & 
 						(intbl[refmagkey] < refmagupper) & 
 						(intbl[refmagkey] > refmaglower) & 
 						(intbl[refmagerkey] < refmagerupper) &
 						(intbl[inmagerkey] < inmagerupper) 
 						)
-	indx0   = np.where( (intbl['FLAGS'] == 0) )
+	indx0   = np.where( (intbl['FLAGS'] <= flagcut) )
 	indx2   = np.where( (intbl[refmagkey] < refmagupper) & 
 						(intbl[refmagkey] > refmaglower) & 
 						(intbl[refmagerkey] < refmagerupper) 
@@ -789,7 +789,7 @@ def star4zp(intbl, inmagerkey, refmagkey, refmagerkey,
 	comment = '-'*60+'\n' \
 			+ 'ALL\t\t\t\t: '+str(len(intbl))+'\n' \
 			+ '-'*60+'\n' \
-			+ 'FLAG(=0)\t\t\t: '+str(len(indx0[0]))+'\n' \
+			+ 'FLAG(<{})\t\t\t: '.format(flagcut)+str(len(indx0[0]))+'\n' \
 			+ refmagkey+' REF. MAGCUT ('+str(refmaglower)+'-'+str(refmagupper)+')'+'\t\t: '+str(len(indx2[0]))+'\n' \
 			+ refmagerkey+' REF. MAGERR CUT < '+str(refmagerupper)+'\n' \
 			+ inmagerkey+' OF IMAGE CUT < '+str(inmagerupper)+'\t: '+str(len(indx3[0]))+'\n' \

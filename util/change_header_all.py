@@ -3,9 +3,9 @@ from astropy.io import fits
 import os,sys,glob
 
 # file_name = raw_input('FILE NAME : ')
-list_name = raw_input('IMAGE TO PROCESS\t: ')
-where = raw_input('WHICH HEADER\t: ')
-what = raw_input('TO WHAT\t: ')
+list_name = input('IMAGE TO PROCESS\t: ')
+where = input('WHICH HEADER\t: ')
+what = input('TO WHAT\t: ')
 
 
 # input file list
@@ -19,7 +19,7 @@ def chg_header(imglist, where, what) :
 		data, header = fits.getdata(img, header = True)
 		fits.getheader(img, 0)
 		header[where] = what
-		fits.writeto(img, data, header, clobber=True)
+		fits.writeto(img, data, header, overwrite=True)
 
 chg_header(imglist, where, what)
 
@@ -31,4 +31,4 @@ fits.getheader(file_name, 0)
 header[where] = what
 fits.writeto(file_name, data, header, clobber=True)
 '''
-print 'DONE'
+print('DONE')

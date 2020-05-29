@@ -22,7 +22,7 @@ from datetime import date
 #============================================================
 #	FUNCTION
 #============================================================
-def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path_config, refmaglower, refmagupper, refmagerupper, inmagerupper, apertures, aper_input, radius = 0.5, frac = 0.9, refcatname = 'PS1',):
+def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path_config, refmaglower, refmagupper, refmagerupper, inmagerupper, flagcut, apertures, aper_input, radius = 0.5, frac = 0.9, refcatname = 'PS1',):
 	head = os.path.splitext(inim)[0]
 	hdr = fits.getheader(inim)
 	xcent, ycent= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
@@ -144,7 +144,9 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						refmaglower=refmaglower,
 						refmagupper=refmagupper,
 						refmagerupper=refmagerupper,
-						inmagerupper=inmagerupper)
+						inmagerupper=inmagerupper,
+						flagcut=flagcut,
+						)
 	param_zpcal = dict(	intbl=phot.star4zp(**param_st4zp),
 						inmagkey=inmagkey, inmagerkey=inmagerkey,
 						refmagkey=refmagkey, refmagerkey=refmagerkey,
@@ -214,11 +216,8 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	line = [s for s in sexout.split('\n') if 'RMS' in s]
 	skymed, skysig = float(line[0].split('Background:')[1].split('RMS:')[0]), float(line[0].split('RMS:')[1].split('/')[0])
 
-	
 	# peeing, seeing	= phot.psfex(inim, pixscale)
-
 	setbl = ascii.read(cat)
-
 	#------------------------------------------------------------
 	#	CENTER POS. & DIST CUT
 	#------------------------------------------------------------
@@ -250,6 +249,7 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						inmagerupper=inmagerupper,
 						verbose=True,
 						plot=True,
+						flagcut=flagcut,
 						plotout=inim[:-5]+'.star.png')
 	param_zpcal	= dict(	intbl=phot.star4zp(**param_st4zp),
 						inmagkey=inmagkey, inmagerkey=inmagerkey,
@@ -434,12 +434,12 @@ inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
 # refmaglower, refmagupper = 12, 17			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 14, 17			#	REF MAG RANGE [MAG]
-refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
-# refmaglower, refmagupper = 12, 17.5			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
+refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.0			#	REF MAG RANGE [MAG]
 # refmagerupper = 0.1
-refmagerupper = 0.02
+refmagerupper = 0.05
 inmagerupper = 0.05
 #------------------------------------------------------------
 # tra, tdec = 208.3714550, 40.2754194
@@ -492,6 +492,7 @@ for i, inim in enumerate(imlist):
 						refmagupper = refmagupper,
 						refmagerupper = refmagerupper,
 						inmagerupper = inmagerupper,
+						flagcut = 2,
 
 						apertures = apertures,
 						aper_input = aper_input,

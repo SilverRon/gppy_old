@@ -12,7 +12,6 @@ import multiprocessing as mp
 import time
 #============================================================
 def astrometry(imlist, pixelscale):
-	starttime	= time.time()
 	scale_low       = str( float(pixelscale) - (float(pixelscale)*0.1) )
 	scale_high      = str( float(pixelscale) + (float(pixelscale)*0.1) )
 	n	= 1
@@ -23,8 +22,6 @@ def astrometry(imlist, pixelscale):
 		os.system(com)
 	os.system('rm tmp*')
 	os.system('rm *.axy *.corr *.xyls *.match *.rdls *.solved *.wcs *axy *.corr')
-	deltime		= time.time() - starttime
-	print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')
 #-------------------------------------------------------------
 os.system('ls *.fits *.fit')
 imlist			= glob.glob(raw_input('Images to process (Calib*.fits)\t: ')); imlist.sort()
@@ -36,8 +33,14 @@ if pixelscale	== ''	:
 #------------------------------------------------------------
 #	MULTI PROCESSING
 #------------------------------------------------------------
+starttime	= time.time()
+'''
 if __name__ == '__main__':
 	jobs	= []
 	p			= mp.Process(target=astrometry, args=(imlist, pixelscale))
 	jobs.append(p)
 	p.start()
+'''
+astrometry(imlist, pixelscale)
+deltime		= time.time() - starttime
+print('All PROCESS IS DONE.\t('+str(round(deltime, 1))+' sec)')

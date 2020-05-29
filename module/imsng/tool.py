@@ -851,3 +851,15 @@ def trim(inim, position, size, outim='trim.fits'):
 	hdu.header.update(cutout.wcs.to_header())
 	# Write the cutout to a new FITS file
 	hdu.writeto(outim, overwrite=True)
+#------------------------------------------------------------
+def calc_app(mag, magerr, gwdist0, gwdiststd0, gwdist1, gwdiststd1):
+	import numpy as np
+	app		= mag+5*np.log10(gwdist1/gwdist0)
+	apperr	= np.sqrt( (magerr)**2 + ((5*gwdiststd1)/(np.log(5)*gwdist1))**2 + ((5*gwdiststd0)/(np.log(5)*gwdist0))**2 )
+	return app, apperr
+#------------------------------------------------------------
+def abs2app(mag, magerr, gwdist, gwdiststd):
+	import numpy as np
+	app		= 5*np.log10(gwdist)-5+mag
+	apperr	= 5*gwdiststd/(gwdist*np.log(10))
+	return app, apperr
