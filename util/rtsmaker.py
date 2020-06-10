@@ -156,7 +156,7 @@ def rts_vis_maker(c, observer, y, m, d, path_out='.'):
 #------------------------------------------------------------
 path_targetlist = '/home/sonic/Research/yourpy/gppy/table/imsng_alltarget.dat'
 path_obs = '/home/sonic/Research/yourpy/gppy/table/observatory.txt'
-path_out = '/home/sonic/Research/CEOU/IMSNG/targetlist/rts_vis_2020'
+path_out = '/home/sonic/Research/CEOU/IMSNG/targetlist/rts_vis_2021'
 #------------------------------------------------------------
 #	TABLE
 obstbl = ascii.read(path_obs)
@@ -169,6 +169,8 @@ constraint_moon = 40*u.deg		# [deg]
 #------------------------------------------------------------
 #	OBSERVATORY INFO
 obs = 'SAO'
+# obs = 'LOAO'
+# obs = 'McD'
 observer = callobserver(obs, obstbl)
 #------------------------------------------------------------
 racol = intbl['ra']
@@ -179,7 +181,8 @@ c = SkyCoord(racol, decol, unit=(u.hourangle, u.deg))
 # obslist = ['LOAO']
 # obslist = ['McD']
 
-y, m, d = 2020, 1, 1
+# y, m, d = 2020, 1, 1
+y, m, d = 2021, 1, 1
 # for obs in obslist:
 
 for m_step in np.arange(0, 12, 1):
@@ -197,7 +200,8 @@ for m_step in np.arange(0, 12, 1):
 			print('{}/{}\tDONE'.format(y, m_input))
 
 
-datelist = [(2020, 1, 31), (2020, 2, 29), (2020, 3, 31), (2020, 4, 30), (2020, 5, 31), (2020, 6, 30), (2020, 7, 31), (2020, 8, 31), (2020, 9, 30), (2020, 10, 31), (2020, 11, 30), (2020, 12, 31), ]
+# datelist = [(2020, 1, 31), (2020, 2, 29), (2020, 3, 31), (2020, 4, 30), (2020, 5, 31), (2020, 6, 30), (2020, 7, 31), (2020, 8, 31), (2020, 9, 30), (2020, 10, 31), (2020, 11, 30), (2020, 12, 31), ]
+datelist = [(2021, 1, 31), (2021, 2, 28), (2021, 3, 31), (2021, 4, 30), (2021, 5, 31), (2021, 6, 30), (2021, 7, 31), (2021, 8, 31), (2021, 9, 30), (2021, 10, 31), (2021, 11, 30), (2021, 12, 31), ]
 for date in datelist:
 	y, m, d = date[0], date[1], date[2]
 

@@ -64,7 +64,8 @@ def hotpants(inim, refim):
 # tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
 # tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
 # tra, tdec, length = 185.4547125, 4.3485889, 20		#	2020hxk
-tra, tdec, length = 185.4603292, 4.481705551, 5		#	2020hxk
+# tra, tdec, length = 185.4603292, 4.481705551, 5		#	2020hxk
+tra, tdec, length = 185.4603292, 4.4817056, 5  # 2020hxk
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 #	arcmin
