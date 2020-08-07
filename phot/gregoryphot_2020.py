@@ -424,7 +424,7 @@ print(len(imlist))
 path_base = './'
 radius = 1.0								#	[DEGREE]
 frac = 1.0									#	IMAGE FRACTION [%]
-# frac = 0.8
+# frac = 0.5
 refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = 'APASS'
 # refcatname = 'SDSS'
@@ -501,13 +501,11 @@ for i, inim in enumerate(imlist):
 	for key in param_phot.keys():
 		print(key, param_phot[key])
 	'''
-	tblist.append(gcurvephot(**param_phot))
-	'''	
+	# tblist.append(gcurvephot(**param_phot))
 	try:
 		tblist.append(gcurvephot(**param_phot))
 	except:
 		pass
-	'''
 	os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
 	# os.system('rm psf*.fits snap*.fits *.xml *sub.fits *.aper.fits *.bkg.fits *.seg.fits')
 #------------------------------------------------------------

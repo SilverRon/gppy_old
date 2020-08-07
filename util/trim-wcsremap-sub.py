@@ -34,6 +34,8 @@ def hotpants(inim, refim):
 	convfile = 'hc'+inim
 	com = 'hotpants -c t -n i -iu 60000 -tu 6000000000 -tl -100000 -v 0 -inim '+inim+' -tmplim '+refim+' -outim '+outfile+' -oci '+convfile
 	os.system(com)
+
+
 #============================================================
 # tra, tdec = 45.3660757, 31.5317386				#	G0250092 FOR DOAO
 # tra, tdec = 14.7255135, 52.6095117				#	G0010044
@@ -65,7 +67,12 @@ def hotpants(inim, refim):
 # tra, tdec, length = 111.8296542, 80.2328528, 10		#	2020ddy
 # tra, tdec, length = 185.4547125, 4.3485889, 20		#	2020hxk
 # tra, tdec, length = 185.4603292, 4.481705551, 5		#	2020hxk
-tra, tdec, length = 185.4603292, 4.4817056, 5  # 2020hxk
+# tra, tdec, length = 185.4603292, 4.4817056, 5  # 2020hxk
+# tra, tdec, length = 185.7338750, 15.8260000, 5
+# tra, tdec, length = 258.3414542, -9.9644667, 1  #	ZTF19aarykkb
+# tra, tdec, length = 262.7914875, -8.4507222, 1  #	ZTF19aarzaod
+
+tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 #	arcmin
@@ -73,7 +80,7 @@ position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 # length = 6
 size = u.Quantity((length*2, length*2), u.arcmin)
 #============================================================
-os.system('rm tr*.fits Ref*.fits h*.fits')
+os.system('rm wr*.fits tr*.fits Ref*.fits h*.fits')
 os.system('ls *.fits')
 # inim = raw_input('INPUT\t: ')
 imlist = glob.glob(raw_input('INPUT\t: ')); imlist.sort()

@@ -4,10 +4,8 @@
 #	2019.05.16	UPDATED BY	Gregory S.H. Paek
 #============================================================
 import os,sys,glob
-import string
 from astropy.io import ascii 
 import numpy as np
-import math
 #------------------------------------------------------------
 def ds9reg(starname, ra, dec, outname='ds9', size=5, color='yellow'):
 	radius	= """ {0}" """.format(size)
