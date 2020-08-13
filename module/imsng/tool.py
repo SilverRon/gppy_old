@@ -863,3 +863,12 @@ def abs2app(mag, magerr, gwdist, gwdiststd):
 	app		= 5*np.log10(gwdist)-5+mag
 	apperr	= 5*gwdiststd/(gwdist*np.log(10))
 	return app, apperr
+#------------------------------------------------------------
+def z2dist(z):
+	from astropy import units as u
+	from astropy import constants as const
+	import numpy as np
+	H0 = 70 * u.km / (u.second * u.Mpc)
+	c = const.c.to(u.km / u.second)
+	d = c*z/H0
+	return d
