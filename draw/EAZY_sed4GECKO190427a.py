@@ -1,6 +1,6 @@
 #	DRAW EAZY OUTPUT AS SED
 #	CREATED	2020.05.07	Gregory S.H. Paek
-#	UPDATE 
+#	UPDATE 2020.08.14	G.Paek
 #============================================================
 import os, glob, subprocess, sys
 import numpy as np

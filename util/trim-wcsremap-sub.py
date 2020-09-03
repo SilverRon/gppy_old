@@ -71,8 +71,9 @@ def hotpants(inim, refim):
 # tra, tdec, length = 185.7338750, 15.8260000, 5
 # tra, tdec, length = 258.3414542, -9.9644667, 1  #	ZTF19aarykkb
 # tra, tdec, length = 262.7914875, -8.4507222, 1  #	ZTF19aarzaod
-
-tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
+# tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
+# tra, tdec, length = 254.034297, -8.1985399, 1.5 # AT2019dnv
+tra, tdec, length = 86.3352843, -26.8477109, 10 # AT2019flz
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 #	arcmin
@@ -80,7 +81,8 @@ position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 # length = 6
 size = u.Quantity((length*2, length*2), u.arcmin)
 #============================================================
-os.system('rm wr*.fits tr*.fits Ref*.fits h*.fits')
+# os.system('rm wr*.fits tr*.fits Ref*.fits h*.fits')
+os.system('rm wr*.fits Ref*.fits h*.fits')
 os.system('ls *.fits')
 # inim = raw_input('INPUT\t: ')
 imlist = glob.glob(raw_input('INPUT\t: ')); imlist.sort()
