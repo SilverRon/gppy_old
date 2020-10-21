@@ -73,7 +73,15 @@ def hotpants(inim, refim):
 # tra, tdec, length = 262.7914875, -8.4507222, 1  #	ZTF19aarzaod
 # tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
 # tra, tdec, length = 254.034297, -8.1985399, 1.5 # AT2019dnv
-tra, tdec, length = 86.3352843, -26.8477109, 10 # AT2019flz
+# tra, tdec, length = 86.3352843, -26.8477109, 10 # AT2019flz
+# tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
+# tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
+# tra, tdec, length = 308.7195919, 60.1547330, 5  # AT2020uxz
+tra, tdec, length = 271.9568721, 17.6887043, 6.2  # Test for CBNUO (NGC6555)
+# tra, tdec, length = 308.7282567, 60.1495581, 13	# Test for CBNUO (NGC6946) - LOAO
+
+
+
 #============================================================
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 #	arcmin

@@ -161,7 +161,10 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 # tra, tdec, length = 185.7288542, 15.8236250, 5	#	SN 2020oi
 # tra, tdec, length = 185.4603292, 4.481705551, 5		#	2020jfo
 # tra, tdec, length = 185.7338750, 15.8260000, 5
-tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
+# tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
+# tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
+tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
+
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
@@ -224,7 +227,7 @@ for inim in imlist:
 		failist.append(inim)
 		pass
 	
-	os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
+	# os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
 	# os.system('rm psf*.fits snap*.fits *.xml *.aper.fits *.bkg.fits *.seg.fits')
 #------------------------------------------------------------
 #	FINISH
@@ -238,15 +241,15 @@ else:
 	#	phot.dat REPLACE
 	photlist = glob.glob('phot*.dat')
 
-	if 'phot.dat' in photlist:
-		photnumb = 0
-		phot_rpl = 'phot.{}.dat'.format(photnumb)
-		while phot_rpl in glob.glob('phot*.dat'):
-			photnumb += 1
+	# if 'phot.dat' in photlist:
+	# 	photnumb = 0
+	# 	phot_rpl = 'phot.{}.dat'.format(photnumb)
+	# 	while phot_rpl in glob.glob('phot*.dat'):
+	# 		photnumb += 1
 	
-		com = 'mv phot.dat {}'.format(phot_rpl)
-		print(com)
-		os.system(com)
+	# 	com = 'mv phot.dat {}'.format(phot_rpl)
+	# 	print(com)
+	# 	os.system(com)
 
 	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
 

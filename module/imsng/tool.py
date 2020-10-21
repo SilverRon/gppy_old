@@ -872,3 +872,13 @@ def z2dist(z):
 	c = const.c.to(u.km / u.second)
 	d = c*z/H0
 	return d
+#------------------------------------------------------------
+def limitmag(ul0, t0, t):
+	import numpy as np
+	ul  = ul0 -(-2.5*np.log10(np.sqrt(t/t0)))
+	return ul
+#------------------------------------------------------------
+def exptime4limitmag(ul0, ul, t0):
+	import numpy as np
+	t = t0*(10.**(2*((ul-ul0)/2.5)))
+	return t

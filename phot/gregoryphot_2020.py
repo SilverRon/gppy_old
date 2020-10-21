@@ -424,6 +424,7 @@ print(len(imlist))
 path_base = './'
 radius = 1.0								#	[DEGREE]
 frac = 1.0									#	IMAGE FRACTION [%]
+# frac = 0.75
 # frac = 0.5
 refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = 'APASS'
@@ -432,20 +433,21 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
-# refmaglower, refmagupper = 12, 17			#	REF MAG RANGE [MAG]
+refmaglower, refmagupper = 12, 17			#	LOAO
 # refmaglower, refmagupper = 14, 17			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
-refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
-# refmaglower, refmagupper = 0, 16.0			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 12, 16.0			#	CBNUO
 # refmagerupper = 0.1
 refmagerupper = 0.05
 inmagerupper = 0.05
 #------------------------------------------------------------
 # tra, tdec = 208.3714550, 40.2754194
-tra, tdec = 185.7288542, 15.8236250				#	SN2020oi
+# tra, tdec = 185.7288542, 15.8236250				#	SN2020oi
 # tra, tdec = 161.6379008, 13.7418711				#	SN2018kp
 # tra, tdec = 44.5438520, -8.9577875				#	GRB 190829A
+tra, tdec = 261.2277917, 31.4283333
 #------------------------------------------------------------
 # phottype = 'normal'
 # phottype = 'subt'
@@ -453,8 +455,9 @@ phottype = 'depth'
 #------------------------------------------------------------
 # aperture = str(input('aperture:'))			#	DIAMETER
 # apertures = np.arange(1, 15.0, 0.5)
-apertures = np.arange(1, 17.0, 0.5)			#	LOAO
-# apertures = np.arange(5, 35.0, 1.0)			#	SOAO
+# apertures = np.arange(1, 17.0, 0.5)			#	LOAO
+# apertures = np.arange(1, 16.0, 0.5)			#	LOAO
+apertures = np.arange(5, 35.0, 1.0)			#	SOAO
 aper_input = ''
 for i in apertures:
 	aper_input = aper_input+'{},'.format(i)
@@ -531,6 +534,6 @@ else:
 		print(com)
 		os.system(com)
 	'''
-	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
+	photbl.write(path_base+'/phot.dat', format='ascii.tab', overwrite=True)
 
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')
