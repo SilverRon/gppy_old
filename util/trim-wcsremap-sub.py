@@ -77,8 +77,14 @@ def hotpants(inim, refim):
 # tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
 # tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
 # tra, tdec, length = 308.7195919, 60.1547330, 5  # AT2020uxz
-tra, tdec, length = 271.9568721, 17.6887043, 6.2  # Test for CBNUO (NGC6555)
+# tra, tdec, length = 271.9568721, 17.6887043, 6.2  # Test for CBNUO (NGC6555)
 # tra, tdec, length = 308.7282567, 60.1495581, 13	# Test for CBNUO (NGC6946) - LOAO
+# tra, tdec, length = 260.812500, 14.350556, 10	# IceCube-201021A
+# tra, tdec, length = 260.7392305, 14.2781964, 7  # IceCube-201021A-1
+# tra, tdec, length = 260.8695288, 14.2811828, 7.8  # IceCube-201021A-2
+# tra, tdec, length = 208.371292, +40.275369, 3  # SN2019ein
+# tra, tdec, length = 140.2022815, 29.7539257, 5.8	#	NuEm-201107A
+tra, tdec, length = 104.6130968, 6.6166924, 10 # NuEm-201107A
 
 
 

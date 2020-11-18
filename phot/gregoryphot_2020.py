@@ -123,13 +123,14 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	print('1. GROWTH CURVE')
 	os.system(phot.sexcom(inim, param_gcurve))
 	setbl = ascii.read(cat_gc)
+	# setbl.write(cat, format='ascii', overwrite=True)
 	reftbl = query.querybox(refcatname, obj, racent, decent, path_refcat, radius=1.0, refmagkey=refmagkey)
 	#	CENTER POS. & DIST CUT
 	deldist = phot.sqsum((xcent-setbl['X_IMAGE']), (ycent-setbl['Y_IMAGE']))
 	# indx_dist = np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
 	indx_dist = np.where(deldist < frac*(xcent+ycent)/2.)
 	intbl = setbl[indx_dist]
-	intbl.write(cat, format='ascii', overwrite=True)
+	# intbl.write(cat, format='ascii', overwrite=True)
 	#	MATCHING
 	param_match = dict(	intbl=intbl, reftbl=reftbl,
 						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
@@ -182,7 +183,12 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						#------------------------------			
 						# PSF_NAME = psf,
 						DETECT_MINAREA = '5',
+						# DETECT_MINAREA = '3',
+						# DETECT_THRESH = '1.0',
+						# DETECT_THRESH = '1.25',
+						# DETECT_THRESH = '1.3',
 						DETECT_THRESH = '1.5',
+						# DETECT_THRESH = '3.0',
 						DEBLEND_NTHRESH = '64',
 						DEBLEND_MINCONT = '0.00001',
 						#------------------------------
@@ -235,7 +241,7 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						sep=3.0)
 	print('3. MATCHING')
 	mtbl = phot.matching(**param_match)
-	mtbl.write(cat, format='ascii', overwrite=True)
+	# mtbl.write(cat, format='ascii', overwrite=True)
 	#------------------------------------------------------------
 	#	ZEROPOINT CALCULATION
 	#------------------------------------------------------------
@@ -288,6 +294,7 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	print('6. BACKGROUND ESTIMATION')
 	# skymean, skymed, skysig = phot.bkgest_mask(inim)
 	peeing, seeing	= np.median(intbl['FWHM_IMAGE']), np.median(intbl['FWHM_WORLD'])*3600
+	ellipticity = np.median(intbl['ELLIPTICITY'])
 
 	aper = 2*peeing
 	ul_3sig = phot.limitmag(3, zp, aper, skysig)
@@ -299,6 +306,7 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	phot.puthdr(inim, 'PHOTIME',date.today().isoformat(),	hdrcomment='PHTOMETRY TIME [KR]')
 	phot.puthdr(inim, 'SEEING',	round(seeing, 3),	hdrcomment='SEEING [arcsec]')
 	phot.puthdr(inim, 'PEEING',	round(peeing, 3),	hdrcomment='SEEING [pixel]')
+	phot.puthdr(inim, 'ELLIPTICITY', round(ellipticity, 3), hdrcomment='ELLIPTICITY [0-1]')
 	phot.puthdr(inim, 'APERPIX', aperture,			hdrcomment='APERTURE DIAMETER [pixel]')
 	phot.puthdr(inim, 'APER', round(aperture*pixscale, 3), hdrcomment='APERTURE DIAMETER [arcsec]')
 	phot.puthdr(inim, 'NAPER', round(aperture/peeing, 3), hdrcomment='N = APERTURE/PEEING')
@@ -320,9 +328,9 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 		intbl['REAL_'+inmagkey] = zp + intbl[inmagkey]
 		intbl['REAL_'+inmagerkey] = phot.sqsum(zper, intbl[inmagerkey])
 		indx_targ = phot.targetfind(tra, tdec, intbl['ALPHA_J2000'], intbl['DELTA_J2000'], sep=seeing)
-		print(indx_targ)
-		print(intbl['X_IMAGE'][indx_targ], intbl['Y_IMAGE'][indx_targ])
 		if indx_targ != None:
+			# print(indx_targ)
+			print(intbl['X_IMAGE'][indx_targ], intbl['Y_IMAGE'][indx_targ])
 			mag, mager	= intbl[indx_targ]['REAL_'+inmagkey], intbl[indx_targ]['REAL_'+inmagerkey]
 			radeg, dedeg = np.asscalar(intbl['ALPHA_J2000'][indx_targ]), np.asscalar(intbl['DELTA_J2000'][indx_targ])
 			radeg, dedeg = intbl['ALPHA_J2000'][indx_targ].item(), intbl['DELTA_J2000'][indx_targ].item()		
@@ -406,8 +414,13 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	elif phottype == 'depth':
 		mag, mager	= -99, -99
 		radeg, dedeg = np.median(intbl['ALPHA_J2000']), np.median(intbl['DELTA_J2000'])
-	onetbl	= Table([[inim], [obs], [obj], [radeg], [dedeg], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul_3sig, 3)], [round(ul_5sig, 3)], [round(mag, 3)], [round(mager, 3)], [round(aperture, 3)]],
-					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'skyval', 'skysig', 'ul_3sig', 'ul_5sig','mag', 'magerr', 'aper_dia_pix'))
+	onetbl	= Table([[inim], [obs], [obj], [radeg], [dedeg], [date_obs], [jd], [refmagkey], [len(otbl)], [round(zp, 3)], [round(zper, 3)], [round(seeing, 3)], [round(ellipticity, 3)], [round(skymed, 3)], [round(skysig, 3)], [round(ul_3sig, 3)], [round(ul_5sig, 3)], [round(mag, 3)], [round(mager, 3)], [round(aperture, 3)]],
+					names=('image', 'obs', 'obj', 'ra', 'dec', 'date-obs', 'jd', 'filter', 'stdnumb', 'zp', 'zper', 'seeing', 'ellipticity', 'skyval', 'skysig', 'ul_3sig', 'ul_5sig','mag', 'magerr', 'aper_dia_pix'))
+
+	tbl = ascii.read(cat)
+	tbl['REAL_'+inmagkey] = zp + tbl[inmagkey]
+	tbl['REAL_'+inmagerkey] = phot.sqsum(zper, tbl[inmagerkey])
+	tbl.write(cat, format='ascii.tab', overwrite=True)
 
 	return onetbl
 #============================================================
@@ -423,8 +436,9 @@ print(len(imlist))
 # inim = '/data1/Test/Calib-DOAO-NGC5350-20190503-145856-R-60.fits'
 path_base = './'
 radius = 1.0								#	[DEGREE]
-frac = 1.0									#	IMAGE FRACTION [%]
-# frac = 0.75
+# frac = 1.0									#	IMAGE FRACTION [%]
+# frac = 0.9
+frac = 0.75
 # frac = 0.5
 refcatname = 'PS1'							#	REFERENCE CATALOG
 # refcatname = 'APASS'
@@ -433,12 +447,14 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
-refmaglower, refmagupper = 12, 17			#	LOAO
+# refmaglower, refmagupper = 12, 17			#	LOAO
 # refmaglower, refmagupper = 14, 17			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
-# refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
+refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 10, 19			#	REF MAG RANGE [MAG] deep DOAO
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 12, 16.0			#	CBNUO
+# refmaglower, refmagupper = 0, 18.5			#	DOAO
 # refmagerupper = 0.1
 refmagerupper = 0.05
 inmagerupper = 0.05
@@ -447,17 +463,25 @@ inmagerupper = 0.05
 # tra, tdec = 185.7288542, 15.8236250				#	SN2020oi
 # tra, tdec = 161.6379008, 13.7418711				#	SN2018kp
 # tra, tdec = 44.5438520, -8.9577875				#	GRB 190829A
-tra, tdec = 261.2277917, 31.4283333
+# tra, tdec = 261.2277917, 31.4283333
+# tra, tdec = 260.8090281, 14.3502257  # IceCube201021A
+# tra, tdec = 42.1846250, 12.1372444 # AT2020yxz
+tra, tdec = 94.1635667, -21.4998250 # AT2020zyy
 #------------------------------------------------------------
-# phottype = 'normal'
+phottype = 'normal'
 # phottype = 'subt'
-phottype = 'depth'
+# phottype = 'depth'
 #------------------------------------------------------------
 # aperture = str(input('aperture:'))			#	DIAMETER
-# apertures = np.arange(1, 15.0, 0.5)
-# apertures = np.arange(1, 17.0, 0.5)			#	LOAO
-# apertures = np.arange(1, 16.0, 0.5)			#	LOAO
-apertures = np.arange(5, 35.0, 1.0)			#	SOAO
+# apertures = np.arange(1, 20.0, 0.75)
+apertures = np.arange(1, 17.0, 0.5)			#	LOAO
+# apertures = np.arange(1, 16.5, 0.5)			#	LOAO
+# apertures = np.arange(5, 35.0, 1.0)			#	SOAO
+# apertures = np.arange(15, 51.25, 1.25)			#	deep DOAO
+# apertures = np.arange(10, 62, 2)			#	deep DOAO
+# apertures = np.arange(15, 45.0, 1.0)			#	deep DOAO
+# apertures = np.arange(1, 36.5, 1.5)			#	deep DOAO
+
 aper_input = ''
 for i in apertures:
 	aper_input = aper_input+'{},'.format(i)
@@ -478,7 +502,8 @@ for i, inim in enumerate(imlist):
 	print('-'*60)
 	print(inim, '[{}/{}]'.format(i+1, len(imlist)))
 	print('-'*60)
-	param_phot = dict(	inim = inim,
+	param_phot = dict(	
+						inim = inim,
 						phottype = phottype,
 						tra = tra, tdec = tdec,
 
@@ -495,7 +520,7 @@ for i, inim in enumerate(imlist):
 						refmagupper = refmagupper,
 						refmagerupper = refmagerupper,
 						inmagerupper = inmagerupper,
-						flagcut = 2,
+						flagcut = 0,
 
 						apertures = apertures,
 						aper_input = aper_input,
@@ -536,4 +561,35 @@ else:
 	'''
 	photbl.write(path_base+'/phot.dat', format='ascii.tab', overwrite=True)
 
+	print('='*60)
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')
+	print('-'*60)
+	print(photbl['filter', 'date-obs', 'seeing', 'skyval', 'skysig', 'ul_5sig', 'mag', 'magerr'])
+
+
+
+
+single = '''
+inim = inim
+phottype = phottype
+tra = tra
+tdec = tdec
+
+radius = radius
+frac = frac
+
+path_base = path_base
+path_refcat = path_refcat
+path_obs = path_obs
+path_config = path_config
+
+refcatname = refcatname
+refmaglower = refmaglower
+refmagupper = refmagupper
+refmagerupper = refmagerupper
+inmagerupper = inmagerupper
+flagcut = 0
+
+apertures = apertures
+aper_input = aper_input
+'''

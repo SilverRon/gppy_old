@@ -55,12 +55,24 @@ param_calc_app = dict(mag=dtbl['mag'],
 					gwdist1=gwdist,
 					gwdiststd1=0.)
 mag, magerr= tool.calc_app(**param_calc_app)
+#============================================================
+#	PLOT
+#------------------------------------------------------------
+plt.close('all')
+plt.rc('font', family='serif')
+fig = plt.figure()
+x = 1920 / 2 / fig.dpi
+y = 1080 / 2 / fig.dpi
+fig.set_figwidth(x)
+fig.set_figheight(y)
 #------------------------------------------------------------
 #	PLOT 1	: TIME - MAG
 #------------------------------------------------------------
-plt.close('all')
-plt.rcParams.update({'font.size': 20})
-fig, ax0	= plt.subplots(nrows=1, ncols=1, sharey=False, figsize=(10, 10))
+# plt.close('all')
+# plt.rcParams.update({'font.size': 20})
+# fig, ax0	= plt.subplots(nrows=1, ncols=1, sharey=False, figsize=(10, 10))
+#------------------------------------------------------------
+ax0 = fig.add_subplot(111)
 #------------------------------------------------------------
 #	GW170817-like
 ax0.plot(dtbl['delmjd'], mag, color='red', alpha=0.5, label='GW170817-like')
@@ -78,7 +90,7 @@ yu, yd = int(np.max(mag))+0.5, int(np.min(ptbl['mag']))-0.5
 ax0.set_ylim([yu, yd])
 ax0.set_xlim([0,2])
 plt.axvline(x=0.48, color='grey', linewidth=2, linestyle='--', label='GW170817 EM discovery')
-ax0.legend(loc='lower right', prop={'size':24})
+ax0.legend(loc='lower right', prop={'size':20})
 ax0.minorticks_on()
 ax0.tick_params(which='both', direction='in', labelsize=20)
 #------------------------------------------------------------
@@ -93,4 +105,4 @@ plt.xticks(fontsize=20)
 plt.yticks(fontsize=20)
 plt.tight_layout()
 plt.minorticks_on()
-plt.savefig('{}/kilonovaLC_{}band.{}Mpc.png'.format('.', filte, int(gwdist)), dpi=500, overwrite=True)
+# plt.savefig('{}/kilonovaLC_{}band.{}Mpc.png'.format('.', filte, int(gwdist)), dpi=500, overwrite=True)

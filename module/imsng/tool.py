@@ -882,3 +882,19 @@ def exptime4limitmag(ul0, ul, t0):
 	import numpy as np
 	t = t0*(10.**(2*((ul-ul0)/2.5)))
 	return t
+#------------------------------------------------------------
+def ToO_request(ul0, m0, n, nsigma=5):
+	'''
+	ul0 : base n sigma depth
+	m0 : target magnitude
+	n : n*exposure time
+	nsigma : ? sigma depth (default 5)
+
+	return depth, target magnitude error
+	'''
+	import numpy as np
+	ul = ul0+2.5*np.log10(np.sqrt(n))
+	dul = ul-m0
+	mer = 1./(nsigma*(dul*(100**0.2)))
+	
+	return round(ul, 3), round(mer, 3)

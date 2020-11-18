@@ -24,6 +24,7 @@ path_cbnuo = '/data1/IMSNG/cbnuo/20201018-imsng/phot.dat'
 path_loao_com_R = '/data1/IMSNG/loao/2020_1017/com/R/phot.dat'
 path_loao_com_B = '/data1/IMSNG/loao/2020_1017/com/B/phot.dat'
 path_cbnuo_com = '/data1/IMSNG/cbnuo/20201018-imsng/com/R/phot.dat'
+path_doao_com = '/data1/IMSNG/doao/20201017-1m-IMSNG/com/phot.dat'
 
 path_save = '/home/sonic/Pictures'
 #------------------------------------------------------------
@@ -46,6 +47,11 @@ lcmtbl_all = vstack([lcmtbl, lcmtbl_])
 
 ccmtbl = ascii.read(path_cbnuo_com)
 ccmtbl = ccmtbl[np.argsort(ccmtbl['jd'])]
+
+dcmtbl = ascii.read(path_doao_com)
+dcmtbl = dcmtbl[np.argsort(dcmtbl['jd'])]
+
+dcmtbl_ = dcmtbl[dcmtbl['filter']=='R']
 #============================================================
 #	PLOT
 #------------------------------------------------------------
@@ -136,10 +142,14 @@ ax3.plot(ctbl['jd'], ctbl['ul_5sig'], marker='o', linestyle='-', color='green', 
 ax3.axhline(y=np.median(ccmtbl['ul_5sig']), color='green', linestyle='-.', linewidth=2.5, label='CBNUO : {}'.format(round(np.median(ccmtbl['ul_5sig']), 1)))
 ax3.plot(ccmtbl['jd'], ccmtbl['ul_5sig'], marker='v', ms=10, mec='k', linestyle='', color='green', alpha=1.0, label='180s*5')
 #------------------------------------------------------------
+#	DOAO
+#------------------------------------------------------------
+ax3.axhline(y=np.median(dcmtbl_['ul_5sig']), color='blue', linestyle=':', linewidth=2.5, label='DOAO : {}'.format(round(np.median(dcmtbl['ul_5sig']), 1)))
+#------------------------------------------------------------
 d_loao, u_loao = ax3.set_ylim()
 d_cbnuo, u_cbnuo = ax3.set_ylim()
 ax3.set_ylim([u_loao, d_cbnuo])
-ax3.legend(fontsize=20)
+ax3.legend(fontsize=18)
 # ax4.set_ylim([up, down])
 # ax4.legend(fontsize=20)
 
@@ -171,12 +181,10 @@ lcmtbl['t-t0'] = lcmtbl['jd']-np.min(lcmtbl['jd'])
 delt_loao = lcmtbl['t-t0'][1:] - lcmtbl['t-t0'][:-1] #-3/(24*60)
 
 
-
 #	[min]
 # print('LOAO')
 # print(np.mean(delt_loao)*24*60, np.std(delt_loao)*24*60)
 # print(np.min(delt_loao)*24*60, np.max(delt_loao)*24*60)
-
 
 
 ccmtbl['t-t0'] = ccmtbl['jd']-np.min(ccmtbl['jd'])
@@ -186,11 +194,24 @@ delt_cbnuo = ccmtbl['t-t0'][1:] - ccmtbl['t-t0'][:-1]
 # print(np.mean(delt_cbnuo)*24*60, np.std(delt_cbnuo)*24*60)
 # print(np.min(delt_cbnuo)*24*60, np.max(delt_cbnuo)*24*60)
 
+dcmtbl_['t-t0'] = dcmtbl_['jd']-np.min(dcmtbl_['jd'])
+delt_doao = dcmtbl_['t-t0'][1:] - dcmtbl_['t-t0'][:-1]
+
+
+
+#------------------------------------------------------------
+
+
+
+
+
 bins = np.arange(0, 82.5, 2.5)
 
 plt.close('all')
-plt.hist(delt_loao*24*60, bins=bins, color='gold', alpha=0.5, label='LOAO B, R ({}) {} min'.format(int(len(lcmtbl_all)/2), round(np.mean(delt_loao)*24*60, 1)))
+plt.hist(delt_loao*24*60, bins=bins, color='gold', alpha=0.5, label='LOAO BR ({}) {} min'.format(int(len(lcmtbl_all)/2), round(np.mean(delt_loao)*24*60, 1)))
+plt.hist(delt_doao*24*60, bins=bins, color='dodgerblue', alpha=0.5, label='DOAO BVR ({}) {} min'.format(int(len(dcmtbl)), round(np.mean(delt_doao)*24*60, 1)))
 plt.hist(delt_cbnuo*24*60, bins=bins, color='green', alpha=0.5, label='CBNUO R ({}) {} min'.format(int(len(ccmtbl)), round(np.mean(delt_cbnuo)*24*60, 1)))
+
 
 params_plot = dict(	
 					x=[np.mean(delt_cbnuo)*24*60],
@@ -216,9 +237,20 @@ params_plot = dict(
 				)
 plt.errorbar(**params_plot)
 
+params_plot = dict(
+					x=[np.mean(delt_doao)*24*60],
+					y=[10],
+					xerr=[np.std(delt_doao)*24*60],
+					marker='s', ms=15, mew=1,
+					mec='k', mfc='dodgerblue', alpha=1.0,
+								fmt='ko',
+					capsize=6.5, capthick=2,
+					# label='CBNUO {} min'.format(round(np.mean(delt_cbnuo)*24*60, 0))
+				)
+plt.errorbar(**params_plot)
 
 
-plt.legend(fontsize=20, loc='upper right', framealpha=1.0)
+plt.legend(fontsize=18, loc='upper right', framealpha=1.0)
 plt.xlabel('observation time per target [min]', fontsize=20)
 plt.ylabel('#', fontsize=20)
 # plt.xscale('log')
