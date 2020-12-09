@@ -208,6 +208,8 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 						#	BACKGROUND
 						#------------------------------
 						BACK_SIZE = '64',
+						# BACK_SIZE = '128',
+						# BACK_SIZE = '256',
 						BACK_FILTERSIZE = '3',
 						BACKPHOTO_TYPE = 'LOCAL',
 						#------------------------------
@@ -230,15 +232,17 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 	deldist = phot.sqsum((xcent-setbl['X_IMAGE']), (ycent-setbl['Y_IMAGE']))
 	# indx_dist = np.where(deldist < np.sqrt(frac)*(xcent+ycent)/2.)
 	indx_dist = np.where(deldist < frac*(xcent+ycent)/2.)
-	intbl = setbl[indx_dist]
+	intbl = setbl
 	# intbl.write(cat, format='ascii', overwrite=True)
+	frctbl = setbl[indx_dist]
 	#------------------------------------------------------------
 	#	MATCHING
 	#------------------------------------------------------------
-	param_match = dict(	intbl=intbl, reftbl=reftbl,
-						inra=intbl['ALPHA_J2000'], indec=intbl['DELTA_J2000'],
+	param_match = dict(	intbl=frctbl, reftbl=reftbl,
+						inra=frctbl['ALPHA_J2000'], indec=frctbl['DELTA_J2000'],
 						refra=reftbl['ra'], refdec=reftbl['dec'],
 						sep=3.0)
+						# sep=seeing_input)
 	print('3. MATCHING')
 	mtbl = phot.matching(**param_match)
 	# mtbl.write(cat, format='ascii', overwrite=True)
@@ -426,9 +430,12 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 #============================================================
 #	USER SETTING
 #============================================================
-starttime	= time.time()
 os.system('ls *.fits')
-imlist		= glob.glob(input('image to process\t: '))
+imkey = input('image to process\t: ')
+if imkey == '':
+	imkey = '*com.fits'
+starttime = time.time()
+imlist = glob.glob(imkey)
 imlist.sort()
 for img in imlist: print(img)
 print(len(imlist))
@@ -447,14 +454,19 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
 inmagerkey = 'MAGERR_APER'
+# inmagkey = 'MAG_AUTO'
+# inmagerkey = 'MAGERR_AUTO'
+#------------------------------------------------------------
 # refmaglower, refmagupper = 12, 17			#	LOAO
+# refmaglower, refmagupper = 12, 17			#	MAO
 # refmaglower, refmagupper = 14, 17			#	REF MAG RANGE [MAG]
-# refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
-refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
+refmaglower, refmagupper = 12, 20			#	REF MAG RANGE [MAG]
+# refmaglower, refmagupper = 12, 18			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 10, 19			#	REF MAG RANGE [MAG] deep DOAO
 # refmaglower, refmagupper = 0, 16.5			#	REF MAG RANGE [MAG]
 # refmaglower, refmagupper = 12, 16.0			#	CBNUO
 # refmaglower, refmagupper = 0, 18.5			#	DOAO
+# refmaglower, refmagupper = 15, 25			#	DOAO
 # refmagerupper = 0.1
 refmagerupper = 0.05
 inmagerupper = 0.05
@@ -465,22 +477,25 @@ inmagerupper = 0.05
 # tra, tdec = 44.5438520, -8.9577875				#	GRB 190829A
 # tra, tdec = 261.2277917, 31.4283333
 # tra, tdec = 260.8090281, 14.3502257  # IceCube201021A
-# tra, tdec = 42.1846250, 12.1372444 # AT2020yxz
-tra, tdec = 94.1635667, -21.4998250 # AT2020zyy
+tra, tdec = 42.1846250, 12.1372444 # AT2020yxz
+# tra, tdec = 94.1635667, -21.4998250 # AT2020zyy
 #------------------------------------------------------------
 phottype = 'normal'
 # phottype = 'subt'
 # phottype = 'depth'
 #------------------------------------------------------------
 # aperture = str(input('aperture:'))			#	DIAMETER
-# apertures = np.arange(1, 20.0, 0.75)
-apertures = np.arange(1, 17.0, 0.5)			#	LOAO
 # apertures = np.arange(1, 16.5, 0.5)			#	LOAO
+# apertures = np.arange(1, 17.0, 0.5)			#	LOAO
+# apertures = np.arange(1, 20.0, 0.75)
 # apertures = np.arange(5, 35.0, 1.0)			#	SOAO
-# apertures = np.arange(15, 51.25, 1.25)			#	deep DOAO
-# apertures = np.arange(10, 62, 2)			#	deep DOAO
-# apertures = np.arange(15, 45.0, 1.0)			#	deep DOAO
+# apertures = np.arange(5, 50, 1.5)			#	SOAO
 # apertures = np.arange(1, 36.5, 1.5)			#	deep DOAO
+# apertures = np.arange(6.25, 39.25, 1.25)			#	deep DOAO
+# apertures = np.arange(30, 70, 1.5)			#	deep DOAO
+# apertures = np.arange(10, 62, 2)			#//	deep DOAO
+# apertures = np.arange(5, 40, 1.5)			#//	deep DOAO
+apertures = np.arange(3, 25, 1.0)			#//	deep DOAO
 
 aper_input = ''
 for i in apertures:
@@ -521,6 +536,7 @@ for i, inim in enumerate(imlist):
 						refmagerupper = refmagerupper,
 						inmagerupper = inmagerupper,
 						flagcut = 0,
+						# flagcut = 2,
 
 						apertures = apertures,
 						aper_input = aper_input,
@@ -534,7 +550,7 @@ for i, inim in enumerate(imlist):
 		tblist.append(gcurvephot(**param_phot))
 	except:
 		pass
-	os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
+	# os.system('rm *.aper.fits *.bkg.fits *.sub.fits')
 	# os.system('rm psf*.fits snap*.fits *.xml *sub.fits *.aper.fits *.bkg.fits *.seg.fits')
 #------------------------------------------------------------
 #	FINISH
@@ -542,7 +558,7 @@ for i, inim in enumerate(imlist):
 if len(tblist) == 0:
 	print('PHOTOMETRY FAILED!')
 else:
-	photbl		= vstack(tblist)
+	photbl = vstack(tblist)
 	# if 'phot.dat' in glob.glob(path_base+'/phot.dat'):
 		# os.system('mv {} {}'.format(path_base+'/phot.dat', path_base+'/phot.dat.bkg'))
 	'''
@@ -565,9 +581,6 @@ else:
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')
 	print('-'*60)
 	print(photbl['filter', 'date-obs', 'seeing', 'skyval', 'skysig', 'ul_5sig', 'mag', 'magerr'])
-
-
-
 
 single = '''
 inim = inim
@@ -592,4 +605,23 @@ flagcut = 0
 
 apertures = apertures
 aper_input = aper_input
+'''
+
+image_quality = '''
+plt.close('all')
+step = +0.1
+med = np.median(photbl['ul_5sig'])
+std = np.std(photbl['ul_5sig'])
+indx = np.where(
+				# (photbl['ul_5sig']>med+2*std) |
+				(photbl['ul_5sig']<med-2*std)
+				)
+
+print(photbl[indx])
+
+bins = np.arange(np.min(photbl['ul_5sig']), np.max(photbl['ul_5sig'])+step, step)
+plt.hist(photbl['ul_5sig'], bins=bins, color='tomato', alpha=0.5)
+plt.hist(photbl['ul_5sig'][indx], bins=bins, color='k', alpha=0.5)
+plt.axvline(x=med, linestyle='--', color='red')
+plt.show()
 '''

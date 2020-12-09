@@ -110,8 +110,14 @@ def centertime2(imlist) :
 try:
 	imkey = sys.argv[1]
 except:
-	os.system('ls Calib*.fits')
-	imkey = raw_input('IMAGES :\t')
+	os.system('ls *.fits')
+	imkey = raw_input('IMAGES (Calib*0.fits) :\t')
+
+if imkey == '':
+	imkey = 'Calib*0.fits'
+else:
+	pass
+
 imlist = glob.glob(imkey); imlist.sort()
 #	DATE
 datelist = []
@@ -122,10 +128,15 @@ datelist = list(set(datelist))
 #	GREGISTERING & IMCOMBINE DAY BY DAY
 comlists = []
 for date in datelist:
-	sublist = glob.glob('Calib-*-{}-*.fits'.format(date)); sublist.sort()
+	# sublist = glob.glob('Calib-*-{}-*.fits'.format(date)); sublist.sort()
+	# sublist = sorted(glob.glob())
+	sublist = []
+	for inim in imlist:
+		if date in inim:
+			sublist.append(inim)
 	refim = sublist[0]
 	gregistering(sublist, refim)
-	comlist = glob.glob('Calib-*-{}-*_gregister.fits'.format(date)); comlist.sort()
+	comlist = sorted(glob.glob('*-{}-*_gregister.fits'.format(date)))
 	comlists.append(imcombine(comlist))
 #	CLEAN
 os.system('rm imcombine.list Calib-*_gregister.fits')

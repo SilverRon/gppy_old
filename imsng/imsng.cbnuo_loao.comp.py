@@ -175,30 +175,21 @@ fig.savefig("{}/imsng.cbnuo_loao.comp.png".format(path_save), bbox_inches='tight
 # lcmtbl_all = lcmtbl_all[np.argsort(lcmtbl_all['jd'])]
 # lcmtbl_all['t-t0'] = lcmtbl_all['jd']-np.min(lcmtbl_all['jd'])
 # delt_loao = lcmtbl_all['t-t0'][1:] - lcmtbl_all['t-t0'][:-1]
-
 lcmtbl = lcmtbl[np.argsort(lcmtbl['jd'])]
 lcmtbl['t-t0'] = lcmtbl['jd']-np.min(lcmtbl['jd'])
 delt_loao = lcmtbl['t-t0'][1:] - lcmtbl['t-t0'][:-1] #-3/(24*60)
-
-
 #	[min]
 # print('LOAO')
 # print(np.mean(delt_loao)*24*60, np.std(delt_loao)*24*60)
 # print(np.min(delt_loao)*24*60, np.max(delt_loao)*24*60)
-
-
 ccmtbl['t-t0'] = ccmtbl['jd']-np.min(ccmtbl['jd'])
 delt_cbnuo = ccmtbl['t-t0'][1:] - ccmtbl['t-t0'][:-1]
 #	[min]
 # print('CBNUO')
 # print(np.mean(delt_cbnuo)*24*60, np.std(delt_cbnuo)*24*60)
 # print(np.min(delt_cbnuo)*24*60, np.max(delt_cbnuo)*24*60)
-
 dcmtbl_['t-t0'] = dcmtbl_['jd']-np.min(dcmtbl_['jd'])
 delt_doao = dcmtbl_['t-t0'][1:] - dcmtbl_['t-t0'][:-1]
-
-
-
 #------------------------------------------------------------
 
 

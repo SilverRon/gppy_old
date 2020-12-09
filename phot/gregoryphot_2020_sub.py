@@ -72,8 +72,12 @@ def gcurvephot(inim, phottype, tra, tdec, path_base, path_refcat, path_obs, path
 							#	EXTRACTION
 							#------------------------------			
 							# PSF_NAME = psf,
-							DETECT_MINAREA = '3',
-							DETECT_THRESH = '1.0',
+							# DETECT_MINAREA = '10',
+							DETECT_MINAREA = '5',
+							# DETECT_THRESH = '2.25',
+							DETECT_THRESH = '1.5',
+							# DETECT_THRESH = '1.0',
+							# DETECT_THRESH = '0.5',
 							DEBLEND_NTHRESH = '64',
 							DEBLEND_MINCONT = '0.0000001',
 							#------------------------------
@@ -163,7 +167,8 @@ refcatname = 'PS1'							#	REFERENCE CATALOG
 # tra, tdec, length = 185.7338750, 15.8260000, 5
 # tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
 # tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
-tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
+# tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
+tra, tdec, length = 170.4208417, 20.1748250, 10 # 2020abqw
 
 #------------------------------------------------------------
 inmagkey = 'MAG_APER'
@@ -251,6 +256,10 @@ else:
 	# 	print(com)
 	# 	os.system(com)
 
-	photbl.write(path_base+'/phot.dat', format='ascii', overwrite=True)
+	photbl.write(path_base+'/phot.dat', format='ascii.tab', overwrite=True)
 
+	print('='*60)
 	print('All PROCESS IS DONE.\t('+str(round(time.time() - starttime, 2))+' sec)')
+	print('-'*60)
+	print(photbl['filter', 'date-obs', 'seeing', 'skyval', 'skysig', 'ul_5sig', 'mag', 'magerr'])
+

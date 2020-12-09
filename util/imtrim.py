@@ -27,6 +27,7 @@ def trim(inim, position, size, outim='trim.fits'):
 	hdu.header.update(cutout.wcs.to_header())
 	# Write the cutout to a new FITS file
 	hdu.writeto(outim, overwrite=True)
+
 #============================================================
 #	INPUT
 #============================================================
@@ -35,12 +36,13 @@ def trim(inim, position, size, outim='trim.fits'):
 # tra, tdec = 44.5438520, -8.9577875				#	GRB 190829A
 # tra, tdec = 44.863251, 31.385878					#	G0037111
 # tra, tdec = 45.3575160, 31.5859348				#	G0250092
-tra, tdec = 45.3660757, 31.5317386				#	G0250092 FOR DOAO
+# tra, tdec = 45.3660757, 31.5317386				#	G0250092 FOR DOAO
 # tra, tdec = 45.4030528, 31.8194872				#	G0049337
 # tra, tdec = 45.4208136, 31.8949936				#	G0232794
+tra, tdec = 42.1846250, 12.1372444				#	AT2020yxz
 
 position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
-length = 10.0	#	[']
+length = 5	#	[']
 #============================================================
 size = u.Quantity((length, length), u.arcmin)
 # trim(inim, position, size, outim)

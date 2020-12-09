@@ -74,9 +74,6 @@ def hotpants(inim, refim):
 # tra, tdec, length = 185.4603292, 4.4817056, 5	#	2020jfo
 # tra, tdec, length = 254.034297, -8.1985399, 1.5 # AT2019dnv
 # tra, tdec, length = 86.3352843, -26.8477109, 10 # AT2019flz
-# tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
-# tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
-# tra, tdec, length = 308.7195919, 60.1547330, 5  # AT2020uxz
 # tra, tdec, length = 271.9568721, 17.6887043, 6.2  # Test for CBNUO (NGC6555)
 # tra, tdec, length = 308.7282567, 60.1495581, 13	# Test for CBNUO (NGC6946) - LOAO
 # tra, tdec, length = 260.812500, 14.350556, 10	# IceCube-201021A
@@ -84,7 +81,14 @@ def hotpants(inim, refim):
 # tra, tdec, length = 260.8695288, 14.2811828, 7.8  # IceCube-201021A-2
 # tra, tdec, length = 208.371292, +40.275369, 3  # SN2019ein
 # tra, tdec, length = 140.2022815, 29.7539257, 5.8	#	NuEm-201107A
-tra, tdec, length = 104.6130968, 6.6166924, 10 # NuEm-201107A
+# tra, tdec, length = 104.6130968, 6.6166924, 10 # NuEm-201107A
+#------------------------------------------------------------
+#	IMSNG
+#------------------------------------------------------------
+# tra, tdec, length = 29.799542, 18.981944, 10 # AT2020uex
+# tra, tdec, length = 21.0286875, 12.92148055, 10  # AT2020uxz
+# tra, tdec, length = 308.7195919, 60.1547330, 5  # AT2020uxz
+tra, tdec, length = 170.4208417, 20.1748250, 5 # 2020abqw
 
 
 
@@ -96,7 +100,7 @@ position = SkyCoord(tra, tdec, frame='icrs', unit='deg')
 size = u.Quantity((length*2, length*2), u.arcmin)
 #============================================================
 # os.system('rm wr*.fits tr*.fits Ref*.fits h*.fits')
-os.system('rm wr*.fits Ref*.fits h*.fits')
+# os.system('rm wr*.fits Ref*.fits h*.fits')
 os.system('ls *.fits')
 # inim = raw_input('INPUT\t: ')
 imlist = glob.glob(raw_input('INPUT\t: ')); imlist.sort()

@@ -111,7 +111,13 @@ try:
 	imkey = sys.argv[1]
 except:
 	os.system('ls Calib*.fits')
-	imkey = raw_input('IMAGES :\t')
+	imkey = raw_input('IMAGES (Calib*0.fits) :\t')
+
+if imkey == '':
+	imkey = 'Calib*0.fits'
+else:
+	pass
+
 imlist = glob.glob(imkey); imlist.sort()
 # #	DATE
 # datelist = []
